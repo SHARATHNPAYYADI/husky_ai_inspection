@@ -110,6 +110,14 @@ def generate_launch_description():
         output='screen',
     )
 
+    remap_odom = Node(
+        package='topic_tools',
+        executable='relay',
+        name='remap_odom',
+        arguments=['/husky_velocity_controller/odom',
+                   '/odom'],
+        output='screen',
+    )
     # Launch husky_control/control.launch.py which is just robot_localization.
     launch_husky_control = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
@@ -131,5 +139,6 @@ def generate_launch_description():
     ld.add_action(spawn_robot)
     ld.add_action(launch_husky_control)
     ld.add_action(launch_husky_teleop_base)
+    ld.add_action(remap_odom)
 
     return ld
