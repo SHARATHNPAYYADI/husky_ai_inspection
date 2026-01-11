@@ -82,6 +82,137 @@
         <inertia ixx="0.6022" ixy="-0.02364" ixz="-0.1197" iyy="1.7386" iyz="-0.001544" izz="2.0296" />
       </inertial>
     </link>
+    
+    <link name="${prefix}sensor_box_link">
+      <visual>
+        <geometry>
+          <box size="0.30 0.25 0.15"/>
+        </geometry>
+        <material name="dark_grey"/>
+      </visual>
+
+      <collision>
+        <geometry>
+          <box size="0.30 0.25 0.15"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="2.0"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.04" iyy="0.04" izz="0.02"
+                ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <!-- Lidar link -->
+    <link name="${prefix}lidar_link">
+      <visual>
+        <geometry>
+          <cylinder radius="0.05" length="0.05"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+
+      <collision>
+        <geometry>
+          <cylinder radius="0.05" length="0.05"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="0.5"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.001" iyy="0.001" izz="0.001"
+                ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+    <!-- Camera link -->
+    <link name="${prefix}camera_link">
+      <visual>
+        <geometry>
+          <box size="0.05 0.05 0.05"/>
+        </geometry>
+        <material name="black"/>
+      </visual>
+
+      <collision>
+        <geometry>
+          <box size="0.05 0.05 0.05"/>
+        </geometry>
+      </collision>
+
+      <inertial>
+        <mass value="0.2"/>
+        <origin xyz="0 0 0"/>
+        <inertia ixx="0.0005" iyy="0.0005" izz="0.0005"
+                ixy="0" ixz="0" iyz="0"/>
+      </inertial>
+    </link>
+
+
+    <!-- Gazebo link for lidar -->
+    <gazebo reference="${prefix}lidar_link">
+      <sensor name="lidar_sensor" type="ray">
+        <pose>0 0 0 0 0 0</pose>
+        <update_rate>10</update_rate>
+
+        <ray>
+          <scan>
+            <horizontal>
+              <samples>720</samples>
+              <resolution>1</resolution>
+              <min_angle>-1.5708</min_angle>
+              <max_angle>1.5708</max_angle>
+            </horizontal>
+          </scan>
+
+          <range>
+            <min>0.12</min>
+            <max>10.0</max>
+            <resolution>0.01</resolution>
+          </range>
+        </ray>
+
+        <plugin name="gazebo_ros_laser" filename="libgazebo_ros_ray_sensor.so">
+          <ros>
+            <namespace>/</namespace>
+            <remapping>~/out:=scan</remapping>
+          </ros>
+          <frame_name>lidar_link</frame_name>
+        </plugin>
+      </sensor>
+    </gazebo>
+
+    <!-- Gazebo link for camera -->
+    <gazebo reference="camera_link">
+      <sensor name="front_camera" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <update_rate>30</update_rate>
+
+        <camera>
+          <horizontal_fov>1.396</horizontal_fov>
+          <image>
+            <width>640</width>
+            <height>480</height>
+            <format>R8G8B8</format>
+          </image>
+          <clip>
+            <near>0.1</near>
+            <far>50</far>
+          </clip>
+        </camera>
+
+        <plugin name="gazebo_ros_camera" filename="libgazebo_ros_camera.so">
+          <ros>
+            <namespace>/</namespace>
+            <remapping>image_raw:=camera/image_raw</remapping>
+            <remapping>camera_info:=camera/camera_info</remapping>
+          </ros>
+          <frame_name>camera_link</frame_name>
+        </plugin>
+      </sensor>
+    </gazebo>
+
 
     <joint name="${prefix}inertial_joint" type="fixed">
       <origin xyz="0 0 0" rpy="0 0 0" />
@@ -106,7 +237,25 @@
       <parent link="${prefix}base_link" />
       <child link="${prefix}gps_link" />
     </joint>
+    <joint name="${prefix}sensor_box_joint" type="fixed">
+      <parent link="${prefix}base_link"/>
+      <child link="${prefix}sensor_box_link"/>
+      <origin xyz="0.25 0 0.32" rpy="0 0 0"/>
+    </joint>
 
+    <!-- lidar link -->
+    <joint name="${prefix}lidar_joint" type="fixed">
+      <parent link="${prefix}sensor_box_link"/>
+      <child link="${prefix}lidar_link"/>
+      <origin xyz="0 0 0.10" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Camera link -->
+    <joint name="${prefix}camera_joint" type="fixed">
+      <parent link="${prefix}sensor_box_link"/>
+      <child link="${prefix}camera_link"/>
+      <origin xyz="0.16 0 0.00" rpy="0 -0.17 0"/>
+    </joint>
 
     <!-- Husky wheel macros -->
     <xacro:husky_wheel wheel_prefix="${prefix}front_left">
