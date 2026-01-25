@@ -4,7 +4,7 @@ project(husky_bringup)
 find_package(ament_cmake REQUIRED)
 
 
-install(DIRECTORY config launch udev
+install(DIRECTORY config launch rviz udev
   DESTINATION share/${PROJECT_NAME}
 )
 install(PROGRAMS scripts/install 
