@@ -1,0 +1,16 @@
+slam_toolbox:
+  ros__parameters:
+    min_laser_range: 0.1
+    max_laser_range: 12.0
+    use_sim_time: true
+    odom_frame: odom
+    base_frame: base_link
+    map_frame: map
+
+    mode: mapping
+    solver_plugin: solver_plugins::CeresSolver
+
+    use_scan_matching: true
+    use_scan_barycenter: true
+    minimum_travel_distance: 0.2
+    minimum_travel_heading: 0.2
