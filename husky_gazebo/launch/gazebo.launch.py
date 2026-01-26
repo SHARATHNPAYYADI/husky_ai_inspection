@@ -166,8 +166,8 @@ def generate_launch_description():
     ld.add_action(spawn_robot)
     ld.add_action(launch_husky_control)
     ld.add_action(launch_husky_teleop_base)
-    # ld.add_action(remap_odom)
-    ld.add_action(imu_filter_node)
-    ld.add_action(ekf_node)
+    ld.add_action(remap_odom)
+    # ld.add_action(imu_filter_node)
+    # ld.add_action(ekf_node)
 
     return ld
