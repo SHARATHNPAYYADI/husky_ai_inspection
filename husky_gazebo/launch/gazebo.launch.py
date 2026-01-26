@@ -61,6 +61,24 @@ def generate_launch_description():
         output='screen',
     )
 
+    imu_filter_node = Node(
+        package='imu_filter_madgwick',
+        executable='imu_filter_madgwick_node',
+        name='imu_filter',
+        output='screen',
+        parameters=[
+            {
+                'use_sim_time': True,
+                'use_mag': False,
+                'publish_tf': False
+            }
+        ],
+        remappings=[
+            ('imu/data_raw', '/imu/data_raw'),
+            ('imu/data', '/imu/data')
+        ]
+    )
+
     node_robot_state_publisher = Node(
         package="robot_state_publisher",
         executable="robot_state_publisher",
@@ -118,6 +136,15 @@ def generate_launch_description():
                    '/odom'],
         output='screen',
     )
+    ekf_node = Node(
+        package='robot_localization',
+        executable='ekf_node',
+        name='ekf_filter_node',
+        output='screen',
+        parameters=[
+            '/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/config/ekf.yaml'
+        ]
+    )
     # Launch husky_control/control.launch.py which is just robot_localization.
     launch_husky_control = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution(
@@ -139,6 +166,8 @@ def generate_launch_description():
     ld.add_action(spawn_robot)
     ld.add_action(launch_husky_control)
     ld.add_action(launch_husky_teleop_base)
-    ld.add_action(remap_odom)
+    # ld.add_action(remap_odom)
+    ld.add_action(imu_filter_node)
+    ld.add_action(ekf_node)
 
     return ld
