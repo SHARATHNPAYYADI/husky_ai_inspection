@@ -131,7 +131,7 @@ ros2 run husky_waypoint_recorder follow_waypoints
 ```
 
 ## Demos
-![Nav2 Localization Demo](videos/nav2_demo_small.gif)
+<!-- ![Nav2 Localization Demo](videos/nav2_demo_small.gif) -->
 
 📹 **Full video:**  
-![Navigation Demo](videos/nav2_demo.gif)
+![Navigation Demo](videos/demo.mp4)
