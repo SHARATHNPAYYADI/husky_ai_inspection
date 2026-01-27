@@ -1,4 +1,4 @@
-ekf_node:
+ekf_filter_node:
   ros__parameters:
     use_sim_time: true
     frequency: 10.0
@@ -28,7 +28,7 @@ ekf_node:
                   false, false, true,
                   false, false, false,
                   false, false, true,
-                  true, true, false]
+                  true, false, false]
     imu0_queue_size: 10
     imu0_differential: false
     imu0_remove_gravitational_acceleration: true

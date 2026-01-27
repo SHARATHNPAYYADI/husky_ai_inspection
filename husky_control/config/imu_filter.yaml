@@ -14,3 +14,4 @@ imu_filter:
     mag_bias_y: 0.0
     mag_bias_z: 0.0
     orientation_stddev: 0.0
+    use_sim_time: true

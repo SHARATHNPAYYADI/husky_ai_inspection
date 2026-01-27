@@ -88,7 +88,7 @@ colcon build
 source install/setup.bash
 ```
 
-## Run Instructions
+## Instructions
 
 Follow the steps in order
 
@@ -101,7 +101,7 @@ ros2 launch husky_gazebo gazebo.launch.py world_path:=/home/sharathnpayyadi/husk
 ### Step 2 – Start Localization
 
 ```bash
-ros2 launch nav2_bringup localization_launch.py use_sim_time:=true map:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml
+ros2 launch nav2_bringup localization_launch.py   use_sim_time:=true   map:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
 
 ```
 
@@ -129,3 +129,9 @@ rviz2
 ```bash
 ros2 run husky_waypoint_recorder follow_waypoints
 ```
+
+## Demos
+<!-- ![Nav2 Localization Demo](videos/nav2_demo_small.gif) -->
+
+📹 **Full video:**  
+![Navigation Demo](videos/demo.mp4)
