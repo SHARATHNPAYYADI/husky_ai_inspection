@@ -14,8 +14,8 @@ amcl:
     max_particles: 4000
 
     # Motion model (VERY important for rotation)
-    alpha1: 0.3   # rot -> rot
-    alpha2: 0.3   # rot -> trans
+    alpha1: 0.4   # rot -> rot
+    alpha2: 0.4   # rot -> trans
     alpha3: 0.2   # trans -> trans
     alpha4: 0.2   # trans -> rot
     alpha5: 0.1
