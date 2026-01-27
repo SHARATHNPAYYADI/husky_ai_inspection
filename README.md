@@ -88,7 +88,7 @@ colcon build
 source install/setup.bash
 ```
 
-## Run Instructions
+## Instructions
 
 Follow the steps in order
 
@@ -129,3 +129,6 @@ rviz2
 ```bash
 ros2 run husky_waypoint_recorder follow_waypoints
 ```
+
+## Demos
+![Navigation Demo](videos/husky_with_manual_goal.mp4)
