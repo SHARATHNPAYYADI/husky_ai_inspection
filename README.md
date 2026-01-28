@@ -124,11 +124,21 @@ ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map:=src/husky_
 rviz2
 ```
 
-### Step 6 – Record Waypoints
+### Step 6a – Go to all points automatically 
 
 ```bash
 ros2 run husky_waypoint_recorder follow_waypoints
 ```
+
+or
+
+### Step 6b – Go to points using the service 
+
+```bash
+ros2 run husky_waypoint_recorder go_to_waypoint
+```
+
+
 
 ## Demos
 <!-- ![Nav2 Localization Demo](videos/nav2_demo_small.gif) -->

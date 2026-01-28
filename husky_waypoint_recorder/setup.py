@@ -24,7 +24,8 @@ setup(
     entry_points={
         'console_scripts': [
             'record_waypoints = husky_waypoint_recorder.record_waypoints:main',
-            'follow_waypoints = husky_waypoint_recorder.follow_waypoints:main'
+            'follow_waypoints = husky_waypoint_recorder.follow_waypoints:main',
+            'go_to_waypoint = husky_waypoint_recorder.go_to_waypoint:main',
         ],
     },
 )
