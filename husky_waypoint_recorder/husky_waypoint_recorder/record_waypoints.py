@@ -1,53 +1,72 @@
 import rclpy
 from rclpy.node import Node
-from geometry_msgs.msg import PointStamped
+from geometry_msgs.msg import PoseStamped
 import yaml
-import sys
+import math
+# from tf_transformations import euler_from_quaternion
+
 
 class WaypointRecorder(Node):
     def __init__(self):
         super().__init__('husky_waypoint_recorder')
+
         self.subscription = self.create_subscription(
-            PointStamped,
-            '/clicked_point',
-            self.point_callback,
+            PoseStamped,
+            '/goal_pose',
+            self.pose_callback,
             10
         )
-        self.waypoints = []
-        self.get_logger().info("Click points in RViz. Press ENTER to save waypoint.")
 
-    def point_callback(self, msg):
-        x = float(msg.point.x)
-        y = float(msg.point.y)
+        self.waypoints = []
+        self.get_logger().info(
+            "Use '2D goal pose' in RViz to record waypoints with orientation"
+        )
+    def yaw_from_quaternion(q):
+        return math.atan2(
+            2.0 * (q.w * q.z + q.x * q.y),1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+        )
+    
+    def pose_callback(self, msg):
+        x = msg.pose.position.x
+        y = msg.pose.position.y
+
+        q = msg.pose.orientation
+        yaw = math.atan2(
+            2.0 * (q.w * q.z + q.x * q.y),
+            1.0 - 2.0 * (q.y * q.y + q.z * q.z)
+        )
 
         waypoint = {
             'x': round(x, 3),
             'y': round(y, 3),
-            'yaw': 0.0   # can be improved later
+            'yaw': round(yaw, 3)
         }
 
         self.waypoints.append(waypoint)
         self.get_logger().info(f"Waypoint added: {waypoint}")
 
+
     def save_to_yaml(self, filename="waypoints.yaml"):
-        data = {'waypoints': self.waypoints}
-        with open(filename, 'w') as file:
-            yaml.dump(data, file)
-        self.get_logger().info(f"Saved {len(self.waypoints)} waypoints to {filename}")
+        with open(filename, 'w') as f:
+            yaml.dump({'waypoints': self.waypoints}, f)
+        self.get_logger().info(
+            f"Saved {len(self.waypoints)} waypoints to {filename}"
+        )
+
 
 def main():
     rclpy.init()
     node = WaypointRecorder()
 
     try:
-        while rclpy.ok():
-            rclpy.spin_once(node, timeout_sec=0.1)
+        rclpy.spin(node)
     except KeyboardInterrupt:
         pass
     finally:
         node.save_to_yaml()
         node.destroy_node()
         rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

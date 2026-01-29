@@ -21,7 +21,8 @@ setup(
     entry_points={
         'console_scripts': [
             'detector_node = husky_vision_detector.detector_node:main',
-            'yolo_fire_extinguisher_node = husky_vision_detector.yolo_fire_extinguisher_node:main'
+            'yolo_fire_extinguisher_node = husky_vision_detector.yolo_fire_extinguisher_node:main',
+            'image_capture_service = husky_vision_detector.image_capture_service:main',
         ],
     },
 )

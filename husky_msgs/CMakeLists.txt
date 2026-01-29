@@ -18,6 +18,8 @@ find_package(rosidl_default_generators REQUIRED)
 rosidl_generate_interfaces(husky_msgs
    msg/HuskyStatus.msg
    srv/InspectFireExtinguisher.srv
+   srv/GoToWaypoint.srv
+   srv/CaptureImage.srv
   DEPENDENCIES
    builtin_interfaces std_msgs
 )
