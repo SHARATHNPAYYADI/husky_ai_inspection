@@ -24,7 +24,7 @@ def generate_launch_description():
 
     declare_world = DeclareLaunchArgument(
         'world_path',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site.world'
+        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site_fire_extuinguisher.world'
     )
 
     declare_map = DeclareLaunchArgument(
