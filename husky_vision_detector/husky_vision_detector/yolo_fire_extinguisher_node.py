@@ -1,17 +1,18 @@
 import rclpy
 from rclpy.node import Node
-
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge
-
-from husky_msgs.srv import InspectFireExtinguisher
+import os
 
 import cv2
 import numpy as np
 from ultralytics import YOLO
 
+from husky_msgs.srv import InspectFireExtinguisher
+
 
 class YoloFireExtinguisherNode(Node):
+
+    CONF_THRESHOLD = 0.2
+    OUTPUT_DIR = "/home/sharathnpayyadi/inspection_results"
 
     def __init__(self):
         super().__init__('yolo_fire_extinguisher_node')
@@ -19,21 +20,17 @@ class YoloFireExtinguisherNode(Node):
         # -------------------------
         # LOAD YOLO MODEL
         # -------------------------
-        # You can later replace with a fine-tuned model
-        self.model = YOLO("yolov8n.pt")
+        self.get_logger().info("Loading YOLO model...")
+        self.model = YOLO("yolov8s-world.pt")
 
-        self.bridge = CvBridge()
-        self.latest_image = None
+        self.get_logger().info("YOLO loaded, warming up...")
+        dummy = np.zeros((640, 640, 3), dtype=np.uint8)
+        _ = self.model(dummy, verbose=False)
 
-        # -------------------------
-        # SUBSCRIBER
-        # -------------------------
-        self.image_sub = self.create_subscription(
-            Image,
-            '/front_camera/image_raw',
-            self.image_callback,
-            10
-        )
+        self.get_logger().info("YOLO ready for inspection")
+
+        # Ensure output directory exists
+        os.makedirs(self.OUTPUT_DIR, exist_ok=True)
 
         # -------------------------
         # SERVICE
@@ -44,31 +41,31 @@ class YoloFireExtinguisherNode(Node):
             self.inspect_callback
         )
 
-        self.get_logger().info("🔥 YOLOv8 Fire Extinguisher Inspection Node started")
-
-    # -------------------------
-    # CAMERA CALLBACK
-    # -------------------------
-    def image_callback(self, msg):
-        self.latest_image = msg
+        self.get_logger().info("🔥 Fire Extinguisher Inspection Service READY")
 
     # -------------------------
     # SERVICE CALLBACK
     # -------------------------
     def inspect_callback(self, request, response):
 
-        if self.latest_image is None:
-            self.get_logger().warn("No image available yet")
+        image_path = request.image_path
+        self.get_logger().info(f"🔍 Inspecting image: {image_path}")
+
+        # -------------------------
+        # VALIDATE IMAGE PATH
+        # -------------------------
+        if not os.path.exists(image_path):
+            self.get_logger().error("❌ Image path does not exist")
             response.present = False
             response.confidence = 0.0
             return response
 
-        self.get_logger().info("🔍 Inspection service triggered")
-
-        # ROS → OpenCV
-        frame = self.bridge.imgmsg_to_cv2(
-            self.latest_image, 'bgr8'
-        )
+        frame = cv2.imread(image_path)
+        if frame is None:
+            self.get_logger().error("❌ Failed to load image")
+            response.present = False
+            response.confidence = 0.0
+            return response
 
         # -------------------------
         # YOLO INFERENCE
@@ -77,6 +74,7 @@ class YoloFireExtinguisherNode(Node):
 
         detected = False
         best_conf = 0.0
+        best_bbox = None
 
         for r in results:
             if r.boxes is None:
@@ -85,19 +83,69 @@ class YoloFireExtinguisherNode(Node):
             for box in r.boxes:
                 cls_id = int(box.cls[0])
                 conf = float(box.conf[0])
-                label = self.model.names[cls_id]
+                label = self.model.names[cls_id].lower()
 
-                # COCO label name
-                if label.lower() == "fire extinguisher":
-                    detected = True
-                    best_conf = max(best_conf, conf)
+                self.get_logger().info(
+                    f"RAW DETECTION → label={label}, conf={conf:.2f}"
+                )
 
-        response.present = detected
-        response.confidence = best_conf
+                # v1 heuristic: bottle ≈ fire extinguisher
+                if label in ["fire extinguisher", "bottle"] and conf >= self.CONF_THRESHOLD:
+                    if conf > best_conf:
+                        best_conf = conf
+                        detected = True
+                        best_bbox = box.xyxy[0].cpu().numpy().astype(int)
 
-        self.get_logger().info(
-            f"✅ Fire extinguisher present: {detected} (conf={best_conf:.2f})"
+        # -------------------------
+        # SAVE ANNOTATED IMAGE
+        # -------------------------
+        base_name = os.path.basename(image_path)
+        name, _ = os.path.splitext(base_name)
+
+        annotated_path = os.path.join(
+            self.OUTPUT_DIR,
+            f"{name}_annotated.jpg"
         )
+
+        if detected and best_bbox is not None:
+            x1, y1, x2, y2 = best_bbox
+
+            cv2.rectangle(frame, (x1, y1), (x2, y2), (0, 255, 0), 2)
+            cv2.putText(
+                frame,
+                f"Extinguisher {best_conf:.2f}",
+                (x1, max(y1 - 10, 20)),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.6,
+                (0, 255, 0),
+                2
+            )
+        else:
+            cv2.putText(
+                frame,
+                "NO FIRE EXTINGUISHER DETECTED",
+                (30, 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.9,
+                (0, 0, 255),
+                2
+            )
+
+        cv2.imwrite(annotated_path, frame)
+        self.get_logger().info(f"🖼 Saved annotated image: {annotated_path}")
+
+        # -------------------------
+        # RESPONSE
+        # -------------------------
+        response.present = detected
+        response.confidence = float(best_conf)
+
+        if detected:
+            self.get_logger().info(
+                f"✅ Fire extinguisher detected (conf={best_conf:.2f})"
+            )
+        else:
+            self.get_logger().warn("⚠ Fire extinguisher NOT detected")
 
         return response
 

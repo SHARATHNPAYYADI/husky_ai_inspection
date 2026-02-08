@@ -1,4 +1,4 @@
-# Request
+string image_path
 ---
 bool present
 float32 confidence
