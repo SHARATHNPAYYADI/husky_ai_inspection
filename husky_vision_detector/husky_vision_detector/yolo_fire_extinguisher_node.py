@@ -8,7 +8,10 @@ from ultralytics import YOLO
 
 from husky_msgs.srv import InspectFireExtinguisher
 
-
+MODEL_PATH = os.getenv(
+    "HUSKY_FIRE_EXT_MODEL",
+    os.path.expanduser("~/husky_ws/src/husky_models/fire_extinguisher_yolo.pt")
+)
 class YoloFireExtinguisherNode(Node):
 
     CONF_THRESHOLD = 0.2
@@ -21,7 +24,8 @@ class YoloFireExtinguisherNode(Node):
         # LOAD YOLO MODEL
         # -------------------------
         self.get_logger().info("Loading YOLO model...")
-        self.model = YOLO("yolov8s-world.pt")
+        # self.model = YOLO("yolov8s-world.pt")
+        self.model = YOLO(MODEL_PATH)
 
         self.get_logger().info("YOLO loaded, warming up...")
         dummy = np.zeros((640, 640, 3), dtype=np.uint8)
@@ -90,7 +94,7 @@ class YoloFireExtinguisherNode(Node):
                 )
 
                 # v1 heuristic: bottle ≈ fire extinguisher
-                if label in ["fire extinguisher", "bottle"] and conf >= self.CONF_THRESHOLD:
+                if label == "fire_extinguisher" and conf >= self.CONF_THRESHOLD:
                     if conf > best_conf:
                         best_conf = conf
                         detected = True
