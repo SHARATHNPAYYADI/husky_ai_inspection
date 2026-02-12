@@ -4,6 +4,7 @@
 
 #include "navigate_to_pose_bt.cpp"
 #include "wait_for_waypoint_bt.cpp"
+#include "wait_for_mission_goal_bt.cpp"
 
 int main(int argc, char ** argv)
 {
@@ -28,6 +29,14 @@ int main(int argc, char ** argv)
             const BT::NodeConfiguration& config)
     {
         return std::make_unique<WaitForWaypointBT>(
+        name, config, node);
+    });
+    factory.registerBuilder<WaitForMissionGoalBT>(
+    "WaitForMissionGoalBT",
+    [node](const std::string& name,
+          const BT::NodeConfiguration& config)
+    {
+      return std::make_unique<WaitForMissionGoalBT>(
         name, config, node);
     });
 

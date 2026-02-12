@@ -28,18 +28,31 @@ public:
   }
 
   static BT::PortsList providedPorts()
-    {
+  {
     return {
-        BT::InputPort<geometry_msgs::msg::PoseStamped>("goal")
+      BT::InputPort<geometry_msgs::msg::PoseStamped>("goal"),
+      BT::InputPort<uint64_t>("mission_id")
     };
-    }
+  }
 
   BT::NodeStatus onStart() override
     {
+    getInput("mission_id", current_mission_id_);
+
+    if (current_mission_id_ != last_mission_id_) {
+      // New mission detected → reset state
+      finished_ = false;
+      succeeded_ = false;
+      failed_ = false;
+      goal_sent_ = false;
+    }
     if (finished_) {
         return succeeded_
         ? BT::NodeStatus::SUCCESS
         : BT::NodeStatus::FAILURE;
+    }
+    if (goal_sent_) {
+      return BT::NodeStatus::RUNNING;
     }
 
     geometry_msgs::msg::PoseStamped goal_pose;
@@ -50,7 +63,7 @@ public:
     }
 
     NavigateToPose::Goal goal;
-    goal.pose = create_goal();
+    goal.pose = goal_pose;
 
     auto options =
         rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
@@ -81,6 +94,7 @@ public:
     if (!finished_) {
         return BT::NodeStatus::RUNNING;
     }
+    last_mission_id_ = current_mission_id_;
 
     return succeeded_
         ? BT::NodeStatus::SUCCESS
@@ -97,18 +111,6 @@ public:
     }
 
 private:
-  geometry_msgs::msg::PoseStamped create_goal()
-  {
-    geometry_msgs::msg::PoseStamped pose;
-    pose.header.frame_id = "map";
-    pose.header.stamp = node_->now();
-
-    pose.pose.position.x = -3.68;
-    pose.pose.position.y = -1.78;
-    pose.pose.orientation.w = 0.0;
-
-    return pose;
-  }
 
   rclcpp::Node::SharedPtr node_;
   rclcpp_action::Client<NavigateToPose>::SharedPtr client_;
@@ -117,4 +119,6 @@ private:
   bool failed_{false};
   bool goal_sent_{false};
   bool finished_{false};
+  uint64_t last_mission_id_{0};
+  uint64_t current_mission_id_{0};
 };
