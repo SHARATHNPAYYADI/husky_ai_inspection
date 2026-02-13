@@ -7,6 +7,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 
 #include "husky_msgs/srv/go_to_waypoint.hpp"
+#include "husky_msgs/msg/mission_goal.hpp"
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
 #include <yaml-cpp/yaml.h>
@@ -25,7 +26,7 @@ public:
     qos.transient_local();
 
     goal_pub_ =
-      this->create_publisher<geometry_msgs::msg::PoseStamped>(
+      this->create_publisher<husky_msgs::msg::MissionGoal>(
         "/mission_goal", qos);
 
     goto_srv_ =
@@ -102,11 +103,14 @@ private:
         req->name.c_str());
       return;
     }
+    husky_msgs::msg::MissionGoal mission_msg;
 
-    auto goal = it->second;
-    goal.header.stamp = this->now();
+    mission_msg.goal_name = req->name;
 
-    goal_pub_->publish(goal);
+    mission_msg.pose = it->second;
+    mission_msg.pose.header.stamp = this->now();
+
+    goal_pub_->publish(mission_msg);
 
     res->accepted = true;
     res->message = "Mission goal published";
@@ -120,7 +124,7 @@ private:
   // --------------------------------------------------
   // Members
   // --------------------------------------------------
-  rclcpp::Publisher<geometry_msgs::msg::PoseStamped>::SharedPtr goal_pub_;
+  rclcpp::Publisher<husky_msgs::msg::MissionGoal>::SharedPtr goal_pub_;
   rclcpp::Service<husky_msgs::srv::GoToWaypoint>::SharedPtr goto_srv_;
 
   std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> waypoints_;

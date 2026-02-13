@@ -1,0 +1,2 @@
+string goal_name
+geometry_msgs/PoseStamped pose

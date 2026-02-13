@@ -122,6 +122,16 @@ def generate_launch_description():
         executable='yolo_fire_extinguisher_node',
         output='screen'
     )
+    mission_bt_node = Node(
+        package='husky_mission_bt',
+        executable='mission_bt_node',
+        output='screen'
+    )
+    mission_interface_node = Node(
+        package='husky_mission_interface',
+        executable='mission_interface_node',
+        output='screen'
+    )
 
     return LaunchDescription([
         declare_use_sim_time,
@@ -135,5 +145,7 @@ def generate_launch_description():
         navigation_launch,
         waypoint_node,
         vision_node,
-        yolo_node
+        yolo_node,
+        mission_bt_node,
+        mission_interface_node
     ])

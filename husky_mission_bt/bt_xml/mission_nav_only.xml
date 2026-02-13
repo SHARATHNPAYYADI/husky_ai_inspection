@@ -1,8 +1,25 @@
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <ReactiveSequence>
-      <WaitForMissionGoalBT goal="{goal}" mission_id="{mission_id}" />
-      <NavigateToPoseBT goal="{goal}" mission_id="{mission_id}" />
-    </ReactiveSequence>
+
+    <Sequence>
+
+      <WaitForMissionGoalBT
+          goal="{goal}"
+          mission_id="{mission_id}"
+          goal_name="{goal_name}" />
+
+      <NavigateToPoseBT
+          goal="{goal}"
+          mission_id="{mission_id}" />
+
+      <InspectFireExtinguisherBT
+          goal_name="{goal_name}"
+          present="{present}"
+          confidence="{confidence}"
+          image_path="{image_path}"
+          annotated_path="{annotated_path}" />
+
+    </Sequence>
+
   </BehaviorTree>
 </root>

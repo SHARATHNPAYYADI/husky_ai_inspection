@@ -36,67 +36,101 @@ public:
   }
 
   BT::NodeStatus onStart() override
-    {
+  {
     getInput("mission_id", current_mission_id_);
 
     if (current_mission_id_ != last_mission_id_) {
-      // New mission detected → reset state
       finished_ = false;
       succeeded_ = false;
       failed_ = false;
       goal_sent_ = false;
     }
+
     if (finished_) {
-        return succeeded_
+      return succeeded_
         ? BT::NodeStatus::SUCCESS
         : BT::NodeStatus::FAILURE;
     }
+
     if (goal_sent_) {
       return BT::NodeStatus::RUNNING;
     }
 
     geometry_msgs::msg::PoseStamped goal_pose;
     if (!getInput("goal", goal_pose)) {
-    RCLCPP_ERROR(node_->get_logger(),
+      RCLCPP_ERROR(node_->get_logger(),
         "BT: No goal in blackboard");
-    return BT::NodeStatus::FAILURE;
+      return BT::NodeStatus::FAILURE;
     }
 
     NavigateToPose::Goal goal;
     goal.pose = goal_pose;
 
-    auto options =
-        rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
+    if (!client_->wait_for_action_server(std::chrono::seconds(2))) {
+      RCLCPP_ERROR(node_->get_logger(),
+        "Nav2 action server not available");
+      return BT::NodeStatus::FAILURE;
+    }
 
-    options.result_callback =
-        [this](auto result) {
-        if (result.code ==
-            rclcpp_action::ResultCode::SUCCEEDED) {
-            succeeded_ = true;
-        } else {
-            failed_ = true;
-        }
+    auto send_goal_options =
+      rclcpp_action::Client<NavigateToPose>::SendGoalOptions();
+
+    // Correct Humble signature
+    send_goal_options.goal_response_callback =
+      [this](rclcpp_action::ClientGoalHandle<NavigateToPose>::SharedPtr goal_handle)
+    {
+      if (!goal_handle) {
+        RCLCPP_ERROR(node_->get_logger(),
+          "Goal rejected by server");
+        failed_ = true;
         finished_ = true;
-        };
+        return;
+      }
 
-    client_->async_send_goal(goal, options);
+      RCLCPP_INFO(node_->get_logger(),
+        "Goal accepted by server");
+    };
+
+    send_goal_options.result_callback =
+      [this](const rclcpp_action::ClientGoalHandle<NavigateToPose>::WrappedResult & result)
+    {
+      if (result.code ==
+          rclcpp_action::ResultCode::SUCCEEDED) {
+        succeeded_ = true;
+      } else {
+        failed_ = true;
+      }
+
+      finished_ = true;
+
+      RCLCPP_INFO(node_->get_logger(),
+        "Navigation result received");
+    };
+
+    client_->async_send_goal(goal, send_goal_options);
+
     goal_sent_ = true;
 
     RCLCPP_INFO(node_->get_logger(),
-        "BT: NavigateToPose goal sent");
+      "BT: NavigateToPose goal sent");
 
     return BT::NodeStatus::RUNNING;
-    }
+  }
+
 
 
     BT::NodeStatus onRunning() override
     {
-    if (!finished_) {
+      if (!finished_) {
         return BT::NodeStatus::RUNNING;
-    }
-    last_mission_id_ = current_mission_id_;
+      }
 
-    return succeeded_
+      last_mission_id_ = current_mission_id_;
+
+      // 🔴 IMPORTANT: reset internal state for next ticks
+      goal_sent_ = false;
+
+      return succeeded_
         ? BT::NodeStatus::SUCCESS
         : BT::NodeStatus::FAILURE;
     }
@@ -109,6 +143,8 @@ public:
     succeeded_ = false;
     failed_ = false;
     }
+  
+
 
 private:
 
