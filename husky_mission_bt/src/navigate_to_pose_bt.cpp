@@ -77,7 +77,7 @@ public:
 
     // Correct Humble signature
     send_goal_options.goal_response_callback =
-      [this](rclcpp_action::ClientGoalHandle<NavigateToPose>::SharedPtr goal_handle)
+    [this](rclcpp_action::ClientGoalHandle<NavigateToPose>::SharedPtr goal_handle)
     {
       if (!goal_handle) {
         RCLCPP_ERROR(node_->get_logger(),
@@ -89,6 +89,8 @@ public:
 
       RCLCPP_INFO(node_->get_logger(),
         "Goal accepted by server");
+
+      goal_handle_ = goal_handle;   // ✅ STORE IT
     };
 
     send_goal_options.result_callback =
@@ -102,6 +104,7 @@ public:
       }
 
       finished_ = true;
+      goal_handle_.reset();
 
       RCLCPP_INFO(node_->get_logger(),
         "Navigation result received");
@@ -137,12 +140,26 @@ public:
 
 
   void onHalted() override
-    {
+  {
+    if (goal_handle_) {
+      RCLCPP_WARN(node_->get_logger(),
+        "Cancelling navigation goal from BT");
+
+      try {
+        client_->async_cancel_goal(goal_handle_);
+      } catch (const rclcpp_action::exceptions::UnknownGoalHandleError & e) {
+        RCLCPP_WARN(node_->get_logger(),
+          "Goal already finished or unknown to client");
+      }
+
+      goal_handle_.reset();
+    }
+
     goal_sent_ = false;
     finished_ = false;
     succeeded_ = false;
     failed_ = false;
-    }
+  }
   
 
 
@@ -150,6 +167,7 @@ private:
 
   rclcpp::Node::SharedPtr node_;
   rclcpp_action::Client<NavigateToPose>::SharedPtr client_;
+  rclcpp_action::ClientGoalHandle<NavigateToPose>::SharedPtr goal_handle_;
 
   bool succeeded_{false};
   bool failed_{false};
