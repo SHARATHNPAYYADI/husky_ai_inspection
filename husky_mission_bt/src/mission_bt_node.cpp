@@ -11,6 +11,9 @@
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "nav2_msgs/action/navigate_to_pose.hpp"
 
+#include "std_msgs/msg/string.hpp"
+#include "action_msgs/msg/goal_status_array.hpp"
+
 using NavigateToPose = nav2_msgs::action::NavigateToPose;
 
 int main(int argc, char ** argv)
@@ -50,6 +53,57 @@ int main(int argc, char ** argv)
 
   auto tree = factory.createTreeFromFile(xml_path);
 
+  // 🔥 Mission Status Publisher
+  auto status_pub =
+    node->create_publisher<std_msgs::msg::String>(
+      "/mission_status", 10);
+
+  // 🔥 Subscribe to Nav2 Action Status
+  auto nav_status_sub =
+    node->create_subscription<action_msgs::msg::GoalStatusArray>(
+      "/navigate_to_pose/_action/status",
+      10,
+      [node, status_pub](action_msgs::msg::GoalStatusArray::SharedPtr msg)
+      {
+        if (msg->status_list.empty()) return;
+
+        auto status = msg->status_list.back().status;
+
+        std_msgs::msg::String state_msg;
+
+        switch(status)
+        {
+          case 1: // ACCEPTED
+            state_msg.data = "ACCEPTED";
+            break;
+
+          case 2: // EXECUTING
+            state_msg.data = "MOVING";
+            break;
+
+          case 3: // CANCELING
+            state_msg.data = "CANCELING";
+            break;
+
+          case 4: // SUCCEEDED
+            state_msg.data = "IDLE";
+            break;
+
+          case 5: // CANCELED
+            state_msg.data = "IDLE";
+            break;
+
+          case 6: // ABORTED
+            state_msg.data = "ERROR";
+            break;
+
+          default:
+            return;
+        }
+
+        status_pub->publish(state_msg);
+      });
+
   // 🔥 Direct Nav2 Action Client for Emergency Cancel
   auto nav2_client =
     rclcpp_action::create_client<NavigateToPose>(
@@ -66,18 +120,18 @@ int main(int argc, char ** argv)
         RCLCPP_WARN(node->get_logger(),
                     "Mission cancel requested");
 
-        // 1️⃣ Cancel Nav2 directly
+        // Cancel Nav2 directly
         if (nav2_client->wait_for_action_server(std::chrono::seconds(1))) {
           nav2_client->async_cancel_all_goals();
           RCLCPP_WARN(node->get_logger(),
                       "Nav2 goals cancelled directly");
         }
 
-        // 2️⃣ Halt BT
+        // Halt BT
         tree.haltTree();
         tree.rootBlackboard()->clear();
 
-        // 3️⃣ Force stop cmd_vel
+        // Force stop cmd_vel
         auto stop_pub =
           node->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel", 10);
 
