@@ -1,0 +1,1015 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Robot Control Dashboard</title>
+  <style>
+    /* ===== CSS Reset & Base Styles ===== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #ffffff;
+      color: #1a1a2e;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* ===== Layout Container ===== */
+    .dashboard {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .dashboard-header {
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #e5e7eb;
+    }
+
+    .dashboard-header h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    /* ===== Section Styles ===== */
+    .section {
+      background-color: #ffffff;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      margin-bottom: 20px;
+      overflow: hidden;
+    }
+
+    .section-header {
+      background-color: #f9fafb;
+      padding: 12px 16px;
+      border-bottom: 1px solid #e5e7eb;
+      font-weight: 600;
+      font-size: 14px;
+      color: #374151;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .section-content {
+      padding: 16px;
+    }
+
+    /* ===== Control Panel ===== */
+    .control-panel {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .control-label {
+      font-size: 14px;
+      font-weight: 500;
+      color: #6b7280;
+    }
+
+    /* Dropdown */
+    .waypoint-select {
+      padding: 10px 14px;
+      font-size: 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background-color: #ffffff;
+      color: #1f2937;
+      cursor: pointer;
+      min-width: 140px;
+    }
+
+    .waypoint-select:focus {
+      outline: none;
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    /* Buttons */
+    .btn {
+      padding: 10px 20px;
+      font-size: 14px;
+      font-weight: 500;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+    }
+
+    .btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .btn-go {
+      background-color: #10b981;
+      color: #ffffff;
+    }
+
+    .btn-go:hover:not(:disabled) {
+      background-color: #059669;
+    }
+
+    .btn-stop {
+      background-color: #dc2626;
+      color: #ffffff;
+      font-weight: 700;
+      padding: 10px 28px;
+    }
+
+    .btn-stop:hover:not(:disabled) {
+      background-color: #b91c1c;
+    }
+
+    .btn-capture {
+      background-color: #3b82f6;
+      color: #ffffff;
+    }
+
+    .btn-capture:hover:not(:disabled) {
+      background-color: #2563eb;
+    }
+
+    /* ===== Status Section ===== */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .status-item {
+      padding: 12px;
+      background-color: #f9fafb;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    .status-label {
+      font-size: 12px;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .status-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .status-idle {
+      color: #6b7280;
+    }
+
+    .status-moving {
+      color: #10b981;
+    }
+
+    .status-error {
+      color: #dc2626;
+    }
+
+    /* ===== Event Log Section ===== */
+    .log-container {
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .log-entry {
+      display: flex;
+      gap: 12px;
+      padding: 10px 0;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 14px;
+    }
+
+    .log-entry:last-child {
+      border-bottom: none;
+    }
+
+    .log-timestamp {
+      color: #9ca3af;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .log-message {
+      color: #374151;
+    }
+
+    .log-empty {
+      color: #9ca3af;
+      font-style: italic;
+      padding: 20px 0;
+      text-align: center;
+    }
+
+    /* ===== Images Gallery ===== */
+    .images-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+      gap: 16px;
+    }
+
+    .image-card {
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: box-shadow 0.15s ease;
+    }
+
+    .image-card:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-thumbnail {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      background-color: #f3f4f6;
+      display: block;
+    }
+
+    .image-info {
+      padding: 10px;
+      background-color: #f9fafb;
+    }
+
+    .image-timestamp {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 2px;
+    }
+
+    .image-source {
+      font-size: 13px;
+      font-weight: 500;
+      color: #374151;
+    }
+
+    .images-empty {
+      color: #9ca3af;
+      font-style: italic;
+      padding: 40px 0;
+      text-align: center;
+      grid-column: 1 / -1;
+    }
+
+    /* ===== Modal ===== */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: rgba(0, 0, 0, 0.8);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-content {
+      position: relative;
+      max-width: 90vw;
+      max-height: 90vh;
+    }
+
+    .modal-image {
+      max-width: 100%;
+      max-height: 90vh;
+      border-radius: 8px;
+    }
+
+    .modal-close {
+      position: absolute;
+      top: -40px;
+      right: 0;
+      background: none;
+      border: none;
+      color: #ffffff;
+      font-size: 32px;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    /* ===== Connection Status ===== */
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: #6b7280;
+    }
+
+    .connection-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #d1d5db;
+    }
+
+    .connection-dot.connected {
+      background-color: #10b981;
+    }
+
+    .connection-dot.error {
+      background-color: #dc2626;
+    }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 640px) {
+      .dashboard {
+        padding: 16px;
+      }
+
+      .control-panel {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .control-group {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .btn {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="dashboard">
+    <!-- Header -->
+    <header class="dashboard-header">
+      <h1>Robot Control Dashboard</h1>
+      <div class="connection-status">
+        <span class="connection-dot" id="connectionDot"></span>
+        <span id="connectionText">Connecting...</span>
+      </div>
+    </header>
+
+    <!-- 1. Control Panel Section -->
+    <section class="section">
+      <div class="section-header">Control Panel</div>
+      <div class="section-content">
+        <div class="control-panel">
+          <!-- Waypoint Dropdown -->
+          <div class="control-group">
+            <label class="control-label" for="waypointSelect">Waypoint:</label>
+            <select class="waypoint-select" id="waypointSelect">
+              <option value="point_1">Point 1</option>
+              <option value="point_2">Point 2</option>
+              <option value="point_3">Point 3</option>
+              <option value="point_4">Point 4</option>
+              <option value="point_5">Point 5</option>
+            </select>
+          </div>
+
+          <!-- Action Buttons -->
+          <button class="btn btn-go" id="btnGo" onclick="sendGoCommand()">Go</button>
+          <button class="btn btn-stop" id="btnStop" onclick="sendStopCommand()">STOP</button>
+          <button class="btn btn-capture" id="btnCapture" onclick="sendCaptureCommand()">Capture Image</button>
+          <button class="btn btn-capture" id="btnInspect" onclick="sendInspectCommand()">Inspect</button>
+          <button class="btn btn-stop" id="btnStopMission" onclick="sendStopMissionCommand()">STOP MISSION</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-header">Manual Control</div>
+      <div class="section-content">
+        <div style="display:flex; gap:32px; align-items:center;">
+
+          <!-- Joystick area -->
+          <div id="joystick"
+              style="
+                width:200px;
+                height:200px;
+                border-radius:50%;
+                background:#e5e7eb;
+                position:relative;
+              ">
+          </div>
+
+          <!-- Readouts -->
+          <div>
+            <div style="font-size:14px;">
+              <strong>Linear:</strong>
+              <span id="linVal">0.00</span>
+            </div>
+            <div style="font-size:14px; margin-top:6px;">
+              <strong>Angular:</strong>
+              <span id="angVal">0.00</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Robot Status Section -->
+    <section class="section">
+      <div class="section-header">Robot Status</div>
+      <div class="section-content">
+        <div class="status-grid">
+          <div class="status-item">
+            <div class="status-label">State</div>
+            <div class="status-value" id="robotState">—</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">Current Goal</div>
+            <div class="status-value" id="currentGoal">—</div>
+          </div>
+          <div class="status-item">
+            <div class="status-label">Last Updated</div>
+            <div class="status-value" id="lastUpdated">—</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Event Log Section -->
+    <section class="section">
+      <div class="section-header">Event Log</div>
+      <div class="section-content">
+        <div class="log-container" id="logContainer">
+          <div class="log-empty">No log entries yet</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Captured Images Gallery -->
+    <section class="section">
+      <div class="section-header">Captured Images</div>
+      <div class="section-content">
+        <div class="images-grid" id="imagesGrid">
+          <div class="images-empty">No images captured yet</div>
+        </div>
+      </div>
+    </section>
+    <section class="section">
+      <div class="section-header">Inspection Results</div>
+      <div class="section-content">
+        <div class="images-grid" id="inspectionGrid">
+          <div class="images-empty">No inspection results yet</div>
+        </div>
+      </div>
+    </section>
+    <!-- 5. Image inspcetion section -->
+    <section class="section" id="inspectionSection" style="display:none;">
+      <div class="section-header">Inspection Result</div>
+      <div class="section-content">
+        <p id="inspectionText" style="margin-bottom:12px; font-weight:600;"></p>
+        <img
+          id="inspectionImage"
+          style="max-width:100%; border:2px solid #111827; border-radius:6px;"
+        />
+      </div>
+    </section>
+  </div>
+
+  <!-- Image Modal -->
+  <div class="modal-overlay" id="imageModal" onclick="closeModal(event)">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeModal(event)">&times;</button>
+      <img class="modal-image" id="modalImage" src="" alt="Full size image">
+    </div>
+  </div>
+  <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
+  <script>
+    // ===== Configuration =====
+    // const API_BASE_URL = 'http://localhost:8000';
+    const API_BASE_URL = '';
+    
+    // Polling intervals (in milliseconds)
+    const STATUS_POLL_INTERVAL = 2000;  // 2 seconds
+    const LOGS_POLL_INTERVAL = 2500;    // 2.5 seconds
+    const IMAGES_POLL_INTERVAL = 4000;  // 4 seconds
+
+    // ===== DOM Elements =====
+    const waypointSelect = document.getElementById('waypointSelect');
+    const btnGo = document.getElementById('btnGo');
+    const btnStop = document.getElementById('btnStop');
+    const btnCapture = document.getElementById('btnCapture');
+    const robotStateEl = document.getElementById('robotState');
+    const currentGoalEl = document.getElementById('currentGoal');
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    const logContainer = document.getElementById('logContainer');
+    const imagesGrid = document.getElementById('imagesGrid');
+    const connectionDot = document.getElementById('connectionDot');
+    const connectionText = document.getElementById('connectionText');
+    const imageModal = document.getElementById('imageModal');
+    const modalImage = document.getElementById('modalImage');
+    const btnInspect = document.getElementById('btnInspect');
+    const inspectionSection = document.getElementById('inspectionSection');
+    const inspectionText = document.getElementById('inspectionText');
+    const inspectionImage = document.getElementById('inspectionImage');
+    const inspectionGrid = document.getElementById('inspectionGrid');
+
+
+    // ===== Utility Functions =====
+
+    /**
+     * Formats a timestamp for display
+     * @param {string|Date} timestamp - The timestamp to format
+     * @returns {string} Formatted time string
+     */
+    function formatTimestamp(timestamp) {
+      if (!timestamp) return '—';
+      const date = new Date(timestamp);
+      return date.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+      });
+    }
+
+    /**
+     * Updates the connection status indicator
+     * @param {boolean} connected - Whether connected to backend
+     * @param {boolean} error - Whether there was an error
+     */
+    function updateConnectionStatus(connected, error = false) {
+      connectionDot.classList.remove('connected', 'error');
+      if (error) {
+        connectionDot.classList.add('error');
+        connectionText.textContent = 'Connection Error';
+      } else if (connected) {
+        connectionDot.classList.add('connected');
+        connectionText.textContent = 'Connected';
+      } else {
+        connectionText.textContent = 'Disconnected';
+      }
+    }
+
+    /**
+     * Gets CSS class for robot state
+     * @param {string} state - Robot state (IDLE, MOVING, ERROR)
+     * @returns {string} CSS class name
+     */
+    function getStateClass(state) {
+      switch (state?.toUpperCase()) {
+        case 'IDLE': return 'status-idle';
+        case 'MOVING': return 'status-moving';
+        case 'ERROR': return 'status-error';
+        default: return '';
+      }
+    }
+
+    // ===== API Functions =====
+
+    /**
+     * Sends POST /go command to move robot to selected waypoint
+     */
+    async function sendGoCommand() {
+      const waypoint = waypointSelect.value;
+      btnGo.disabled = true;
+      
+      try {
+        const response = await fetch(`/go`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ waypoint: waypoint })
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        console.log(`Go command sent: ${waypoint}`);
+      } catch (error) {
+        console.error('Failed to send go command:', error);
+        alert('Failed to send Go command. Check console for details.');
+      } finally {
+        btnGo.disabled = false;
+      }
+    }
+
+    /**
+     * Sends POST /stop command to stop the robot
+     */
+    async function sendStopCommand() {
+      btnStop.disabled = true;
+      
+      try {
+        const response = await fetch(`/stop`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        console.log('Stop command sent');
+      } catch (error) {
+        console.error('Failed to send stop command:', error);
+        alert('Failed to send STOP command. Check console for details.');
+      } finally {
+        btnStop.disabled = false;
+      }
+    }
+
+    /**
+     * Sends POST /capture command to capture an image
+     */
+    async function sendCaptureCommand() {
+      btnCapture.disabled = true;
+      
+      try {
+        const response = await fetch(`/capture`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({})
+        });
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        console.log('Capture command sent');
+      } catch (error) {
+        console.error('Failed to send capture command:', error);
+        alert('Failed to send Capture command. Check console for details.');
+      } finally {
+        btnCapture.disabled = false;
+      }
+    }
+    async function sendInspectCommand() {
+      // fetchInspectionImages();
+      btnInspect.disabled = true;
+      inspectionSection.style.display = 'none';
+
+      try {
+        const waypoint = waypointSelect.value;
+
+        const response = await fetch(`/inspect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ waypoint: waypoint })
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+          throw new Error('Inspection failed');
+        }
+
+        // Update UI
+        inspectionText.textContent = data.present
+          ? `Fire extinguisher detected (confidence ${data.confidence.toFixed(2)})`
+          : 'Fire extinguisher NOT detected';
+
+        // Cache-busting so browser reloads new image
+        inspectionImage.src = data.annotated_image + '?t=' + Date.now();
+
+        inspectionSection.style.display = 'block';
+
+        console.log('Inspection completed:', data);
+
+      } catch (error) {
+        console.error('Inspection error:', error);
+        alert('Inspection failed. Check backend logs.');
+      } finally {
+        btnInspect.disabled = false;
+      }
+    }
+    async function sendStopMissionCommand() {
+      const btn = document.getElementById('btnStopMission');
+      btn.disabled = true;
+
+      try {
+        const response = await fetch(`/stop_mission`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+
+        console.log('Mission cancel requested');
+
+      } catch (error) {
+        console.error('Failed to stop mission:', error);
+        alert('Failed to stop mission.');
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+
+
+    /**
+     * Fetches GET /status and updates the status display
+     */
+    async function fetchStatus() {
+      try {
+        const response = await fetch(`/status`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        updateConnectionStatus(true);
+        
+        // Update robot state with appropriate styling
+        const state = data.state || 'UNKNOWN';
+        robotStateEl.textContent = state;
+        robotStateEl.className = 'status-value ' + getStateClass(state);
+        
+        // Update current goal
+        currentGoalEl.textContent = data.current_goal || '—';
+        
+        // Update last updated timestamp
+        lastUpdatedEl.textContent = formatTimestamp(data.last_updated || new Date());
+        
+      } catch (error) {
+        console.error('Failed to fetch status:', error);
+        updateConnectionStatus(false, true);
+      }
+    }
+
+    /**
+     * Fetches GET /logs and updates the log display
+     */
+    async function fetchLogs() {
+      try {
+        const response = await fetch(`/logs`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        const logs = await response.json();
+        
+        // Clear container
+        logContainer.innerHTML = '';
+        
+        if (!logs || logs.length === 0) {
+          logContainer.innerHTML = '<div class="log-empty">No log entries yet</div>';
+          return;
+        }
+        
+        // Sort logs by timestamp (newest first)
+        const sortedLogs = [...logs].sort((a, b) => {
+          return new Date(b.timestamp) - new Date(a.timestamp);
+        });
+        
+        // Render log entries
+        sortedLogs.forEach(log => {
+          const entry = document.createElement('div');
+          entry.className = 'log-entry';
+          entry.innerHTML = `
+            <span class="log-timestamp">${formatTimestamp(log.timestamp)}</span>
+            <span class="log-message">${escapeHtml(log.message)}</span>
+          `;
+          logContainer.appendChild(entry);
+        });
+        
+      } catch (error) {
+        console.error('Failed to fetch logs:', error);
+      }
+    }
+
+    /**
+     * Fetches GET /images and updates the image gallery
+     */
+    async function fetchImages() {
+      try {
+        const response = await fetch(`/images`);
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error: ${response.status}`);
+        }
+        
+        const images = await response.json();
+        
+        // Clear grid
+        imagesGrid.innerHTML = '';
+        
+        if (!images || images.length === 0) {
+          imagesGrid.innerHTML = '<div class="images-empty">No images captured yet</div>';
+          return;
+        }
+        
+        // Render image cards
+        images.forEach(img => {
+          const card = document.createElement('div');
+          card.className = 'image-card';
+          card.onclick = () => openModal(img.full_url);
+          card.innerHTML = `
+            <img class="image-thumbnail" src="${escapeHtml(img.thumbnail_url)}" alt="Captured image" loading="lazy">
+            <div class="image-info">
+              <div class="image-timestamp">${formatTimestamp(img.timestamp)}</div>
+              <div class="image-source">${escapeHtml(img.source || 'Manual')}</div>
+            </div>
+          `;
+          imagesGrid.appendChild(card);
+        });
+        
+      } catch (error) {
+        console.error('Failed to fetch images:', error);
+      }
+    }
+
+    async function fetchInspectionImages() {
+      try {
+        const response = await fetch(`/inspection_images`);
+        if (!response.ok) {
+          throw new Error("Failed to load inspection images");
+        }
+
+        const images = await response.json();
+
+        const currentFiles = images.map(img => img.filename);
+
+        // ✅ NO CHANGE → DO NOTHING (prevents flicker)
+        if (
+          currentFiles.length === lastInspectionFiles.length &&
+          currentFiles.every((v, i) => v === lastInspectionFiles[i])
+        ) {
+          return;
+        }
+
+        // Update cache
+        lastInspectionFiles = currentFiles;
+
+        // Re-render ONLY when changed
+        inspectionGrid.innerHTML = '';
+
+        if (images.length === 0) {
+          inspectionGrid.innerHTML =
+            '<div class="images-empty">No inspection results yet</div>';
+          return;
+        }
+
+        images.forEach(img => {
+          const card = document.createElement('div');
+          card.className = 'image-card';
+          card.onclick = () => openModal(img.url);
+
+          card.innerHTML = `
+            <img
+              class="image-thumbnail"
+              src="${img.url}?t=${Date.now()}"
+              alt="Inspection result"
+              loading="lazy"
+            >
+            <div class="image-info">
+              <div class="image-timestamp">${formatTimestamp(img.timestamp)}</div>
+              <div class="image-source">Inspection</div>
+            </div>
+          `;
+
+          inspectionGrid.appendChild(card);
+        });
+
+      } catch (err) {
+        console.error("Failed to fetch inspection images:", err);
+      }
+    }
+
+
+
+
+    /**
+     * Escapes HTML to prevent XSS
+     * @param {string} text - Text to escape
+     * @returns {string} Escaped HTML
+     */
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text || '';
+      return div.innerHTML;
+    }
+
+    // ===== Modal Functions =====
+
+    /**
+     * Opens the image modal with the specified image URL
+     * @param {string} imageUrl - URL of the image to display
+     */
+    function openModal(imageUrl) {
+      modalImage.src = imageUrl;
+      imageModal.classList.add('active');
+    }
+
+    /**
+     * Closes the image modal
+     * @param {Event} event - Click event
+     */
+    function closeModal(event) {
+      // Only close if clicking overlay or close button
+      if (event.target === imageModal || event.target.closest('.modal-close')) {
+        imageModal.classList.remove('active');
+        modalImage.src = '';
+      }
+    }
+    let teleopSocket = null;
+    let lastInspectionFiles = [];
+    function initJoystick() {
+      const linEl = document.getElementById('linVal');
+      const angEl = document.getElementById('angVal');
+
+      teleopSocket = new WebSocket(
+        `ws://${window.location.host}/ws/teleop`
+      );
+
+      const joystick = nipplejs.create({
+        zone: document.getElementById('joystick'),
+        mode: 'static',
+        position: { left: '50%', top: '50%' },
+        size: 180,
+        color: '#38bdf8'
+      });
+
+      joystick.on('move', (evt, data) => {
+        if (!data.vector || teleopSocket.readyState !== 1) return;
+
+        const linear = Number(data.vector.y.toFixed(2));
+        const angular = Number((-data.vector.x).toFixed(2));
+
+        linEl.textContent = linear;
+        angEl.textContent = angular;
+
+        teleopSocket.send(JSON.stringify({
+          linear,
+          angular
+        }));
+      });
+
+      joystick.on('end', () => {
+        linEl.textContent = '0.00';
+        angEl.textContent = '0.00';
+
+        if (teleopSocket.readyState === 1) {
+          teleopSocket.send(JSON.stringify({
+            linear: 0,
+            angular: 0
+          }));
+        }
+      });
+    }
+
+    document.addEventListener('DOMContentLoaded', initJoystick);
+
+
+    // Close modal on Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        imageModal.classList.remove('active');
+        modalImage.src = '';
+      }
+    });
+
+    // ===== Initialize Polling =====
+
+    // Start polling when page loads
+    document.addEventListener('DOMContentLoaded', () => {
+      // Initial fetch
+      fetchStatus();
+      fetchLogs();
+      fetchImages();
+      fetchInspectionImages();
+      
+      // Set up polling intervals
+      setInterval(fetchStatus, STATUS_POLL_INTERVAL);
+      setInterval(fetchLogs, LOGS_POLL_INTERVAL);
+      setInterval(fetchImages, IMAGES_POLL_INTERVAL);
+      setInterval(fetchInspectionImages, IMAGES_POLL_INTERVAL);
+    });
+  </script>
+</body>
+</html>

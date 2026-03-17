@@ -14,7 +14,7 @@ from ultralytics import YOLO
 
 MODEL_PATH = os.getenv(
     "HUSKY_FIRE_EXT_MODEL",
-    os.path.expanduser("~/husky_ws/src/husky_models/fire_extinguisher_yolo.pt")
+    os.path.expanduser("~/husky_ws/src/husky_ai_inspection/husky_models/fire_extinguisher_yolo.pt")
 )
 
 
