@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Husky Robot Inspection System</title>
+
+<script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
+
+<style>
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto;
+  background:#f4f6f9;
+  color:#1f2937;
+}
+
+.container {
+  max-width:1400px;
+  margin:auto;
+  padding:30px;
+}
+
+header {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:30px;
+}
+
+header h1 { font-size:22px; font-weight:600; }
+
+.mode-toggle button {
+  padding:8px 18px;
+  border:none;
+  border-radius:6px;
+  margin-left:10px;
+  cursor:pointer;
+  font-weight:500;
+}
+
+.mode-toggle .active {
+  background:#2563eb;
+  color:white;
+}
+
+.mode-toggle button:not(.active) {
+  background:#e5e7eb;
+}
+
+.layout {
+  display:grid;
+  grid-template-columns:400px 1fr;
+  gap:25px;
+}
+
+.card {
+  background:white;
+  border-radius:10px;
+  padding:22px;
+  box-shadow:0 3px 10px rgba(0,0,0,0.05);
+}
+
+.card h3 {
+  margin-bottom:20px;
+  font-size:13px;
+  letter-spacing:1px;
+  color:#6b7280;
+}
+
+/* JOYSTICK */
+#joystick-zone {
+  width:240px;
+  height:240px;
+  margin:auto;
+  background:#e5e7eb;
+  border-radius:50%;
+  position:relative;
+}
+
+.readout {
+  margin-top:20px;
+  text-align:center;
+  font-size:14px;
+}
+
+.stop-btn {
+  margin-top:20px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:6px;
+  background:#dc2626;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.capture-btn {
+  margin-top:10px;
+  width:100%;
+  padding:12px;
+  border:none;
+  border-radius:6px;
+  background:#2563eb;
+  color:white;
+  font-weight:600;
+  cursor:pointer;
+}
+
+.status-item { margin-bottom:10px; }
+
+.grid-right {
+  display:grid;
+  grid-template-rows:auto auto auto 1fr;
+  gap:20px;
+}
+
+.log-box, .inspection-box {
+  height:180px;
+  background:#f9fafb;
+  border-radius:8px;
+  padding:12px;
+  overflow-y:auto;
+  font-size:13px;
+}
+
+.hidden { display:none; }
+
+/* PROGRESS */
+.progress-bar {
+  height:8px;
+  background:#e5e7eb;
+  border-radius:5px;
+  overflow:hidden;
+  margin-bottom:18px;
+}
+
+.progress-fill {
+  height:100%;
+  width:0%;
+  background:#2563eb;
+  transition:width 0.4s ease;
+}
+
+.steps {
+  display:flex;
+  justify-content:space-between;
+  font-size:12px;
+  color:#9ca3af;
+}
+
+.step.active {
+  color:#2563eb;
+  font-weight:600;
+}
+
+.images-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(120px,1fr));
+  gap:10px;
+  max-height:200px;
+  overflow-y:auto;
+}
+
+.image-card {
+  position: relative;
+  border-radius:6px;
+  overflow:hidden;
+  cursor:pointer;
+  background:#f3f4f6;
+}
+
+.image-card img {
+  width:100%;
+  height:100px;
+  object-fit:cover;
+  display:block;
+}
+
+.image-overlay {
+  position:absolute;
+  bottom:0;
+  left:0;
+  right:0;
+  background:rgba(0,0,0,0.7);
+  color:white;
+  font-size:11px;
+  padding:6px 8px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+
+.image-overlay span {
+  display:block;
+  line-height:1.2;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header>
+  <h1>Husky Robot Inspection System</h1>
+
+  <div style="display:flex; align-items:center; gap:20px;">
+
+    <!-- Connection Status -->
+    <div style="display:flex; align-items:center; gap:8px; font-size:13px;">
+      <div id="connectionDot"
+           style="width:10px; height:10px; border-radius:50%; background:#d1d5db;">
+      </div>
+      <span id="connectionText">Connecting...</span>
+    </div>
+
+    <!-- Mode Toggle -->
+    <div class="mode-toggle">
+      <button id="manualBtn" class="active" onclick="switchMode('manual')">Manual</button>
+      <button id="autoBtn" onclick="switchMode('auto')">Autonomous</button>
+    </div>
+
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- LEFT PANEL -->
+  <div>
+
+    <!-- MANUAL -->
+    <div class="card" id="manualPanel">
+      <h3>MANUAL CONTROL</h3>
+
+      <!-- GO TO GOAL SECTION -->
+      <div style="margin-bottom:20px;">
+
+        <select id="manualGoalSelect"
+                style="width:100%; padding:10px; margin-bottom:10px; border-radius:6px; border:1px solid #d1d5db;">
+          <option value="point_1">Point 1</option>
+          <option value="point_2">Point 2</option>
+          <option value="point_3">Point 3</option>
+          <option value="point_4">Point 4</option>
+          <option value="point_5">Point 5</option>
+        </select>
+
+
+        <button style="
+          width:100%;
+          padding:10px;
+          background:#16a34a;
+          color:white;
+          border:none;
+          border-radius:6px;
+          font-weight:600;
+          cursor:pointer;
+        "
+        onclick="goToGoal()">
+          GO TO GOAL
+        </button>
+
+      </div>
+
+      <!-- JOYSTICK -->
+      <div id="joystick-zone"></div>
+
+      <div class="readout">
+        Linear: <span id="linVal">0.00</span><br>
+        Angular: <span id="angVal">0.00</span>
+      </div>
+
+      <button class="stop-btn" onclick="stopRobot()">STOP</button>
+
+      <button class="capture-btn" onclick="captureImage()">
+        CAPTURE IMAGE
+      </button>
+    </div>
+
+
+    <!-- AUTONOMOUS -->
+    <div class="card hidden" id="autoPanel">
+      <h3>AUTONOMOUS MISSION</h3>
+
+      <select id="waypointSelect" style="width:100%; padding:10px; margin-bottom:15px;">
+        <option value="point_1">Point 1</option>
+        <option value="point_2">Point 2</option>
+        <option value="point_3">Point 3</option>
+        <option value="point_4">Point 4</option>
+        <option value="point_5">Point 5</option>
+      </select>
+
+      <button onclick="startMission()" style="width:100%; padding:10px; margin-bottom:10px; background:#16a34a; color:white; border:none; border-radius:6px;">
+        START INSPECTION
+      </button>
+
+      <button onclick="cancelMission()" style="width:100%; padding:10px; background:#dc2626; color:white; border:none; border-radius:6px;">
+        CANCEL MISSION
+      </button>
+    </div>
+
+  </div>
+
+  <!-- RIGHT PANEL -->
+  <div class="grid-right">
+
+    <div class="card">
+      <h3>ROBOT STATUS</h3>
+      <div class="status-item">State: <strong id="robotState">IDLE</strong></div>
+      <div class="status-item">Current Goal: <strong id="robotGoal">—</strong></div>
+    </div>
+
+    <div class="card">
+      <h3>MISSION PROGRESS</h3>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="steps">
+        <div class="step active" id="step1">Waiting</div>
+        <div class="step" id="step2">Navigating</div>
+        <div class="step" id="step3">Inspecting</div>
+        <div class="step" id="step4">Completed</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>EVENT LOG</h3>
+      <div class="log-box">No logs yet...</div>
+    </div>
+
+    <div class="card">
+      <h3>CAPTURED IMAGES</h3>
+      <div class="images-grid" id="imagesGrid">
+        <div style="color:#9ca3af;">No images captured yet...</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>INSPECTION RESULTS</h3>
+      <div class="images-grid" id="inspectionGrid">
+        <div style="color:#9ca3af;">No inspection results yet...</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+</div>
+
+<script>
+
+/* MODE SWITCH */
+function switchMode(mode) {
+  document.getElementById("manualBtn").classList.toggle("active", mode==="manual");
+  document.getElementById("autoBtn").classList.toggle("active", mode==="auto");
+  document.getElementById("manualPanel").classList.toggle("hidden", mode!=="manual");
+  document.getElementById("autoPanel").classList.toggle("hidden", mode!=="auto");
+}
+
+/* =============================
+   CONNECTION STATUS (REAL)
+============================= */
+
+function setConnectionStatus(connected, error=false){
+  const dot = document.getElementById("connectionDot");
+  const text = document.getElementById("connectionText");
+
+  if(error){
+    dot.style.background = "#dc2626";
+    text.textContent = "Connection Error";
+  } else if(connected){
+    dot.style.background = "#16a34a";
+    text.textContent = "Connected";
+  } else{
+    dot.style.background = "#d1d5db";
+    text.textContent = "Disconnected";
+  }
+}
+function formatTimestampFromFilename(filename) {
+  try {
+
+    // Remove extension
+    filename = filename.replace(".jpg", "");
+
+    const parts = filename.split("_");
+
+    // Date is second last
+    const datePart = parts[parts.length - 2];
+    const timePart = parts[parts.length - 1] === "annotated"
+      ? parts[parts.length - 2] && parts[parts.length - 3]
+      : parts[parts.length - 1];
+
+    // If annotated, shift timePart
+    const actualTime = parts[parts.length - 1] === "annotated"
+      ? parts[parts.length - 2]
+      : parts[parts.length - 1];
+
+    const actualDate = parts[parts.length - 1] === "annotated"
+      ? parts[parts.length - 3]
+      : parts[parts.length - 2];
+
+    const year = actualDate.substring(0,4);
+    const month = actualDate.substring(4,6);
+    const day = actualDate.substring(6,8);
+
+    const hour = actualTime.substring(0,2);
+    const min = actualTime.substring(2,4);
+    const sec = actualTime.substring(4,6);
+
+    return `${day}/${month}/${year} ${hour}:${min}:${sec}`;
+
+  } catch(e) {
+    return "";
+  }
+}
+function formatInspectionTimestamp(filename) {
+  try {
+
+    const parts = filename.split("_");
+
+    const hour = parts[0];
+    const minute = parts[1].substring(0,2);
+    const second = parts[1].substring(2,4);
+
+    return `${hour}:${minute}:${second}`;
+
+  } catch(e) {
+    return "";
+  }
+}
+// Display images
+async function fetchImages() {
+  try {
+    const response = await fetch("/images");
+    const images = await response.json();
+
+    const grid = document.getElementById("imagesGrid");
+
+    if (!images || images.length === 0) {
+      grid.innerHTML = '<div style="color:#9ca3af;">No images captured yet...</div>';
+      return;
+    }
+
+    grid.innerHTML = "";
+    images.sort((a, b) => {
+      const fileA = a.thumbnail_url.split("/").pop();
+      const fileB = b.thumbnail_url.split("/").pop();
+
+      return extractDateTimeObject(fileB) - extractDateTimeObject(fileA);
+    });
+    images.slice(0, 20).forEach(img => {
+      const card = document.createElement("div");
+      card.className = "image-card";
+
+      const filename = img.thumbnail_url.split("/").pop();
+      const timestamp = formatTimestampFromFilename(filename);
+      const point = extractInspectionPoint(filename);
+
+      card.innerHTML = `
+        <img src="${img.thumbnail_url}?t=${Date.now()}" />
+        <div class="image-overlay">
+          <span>📍 ${point}</span>
+          <span>🕒 ${timestamp}</span>
+        </div>
+      `;
+
+      card.onclick = () => window.open(img.full_url, "_blank");
+
+      grid.appendChild(card);
+    });
+
+  } catch(err){
+    console.error("Failed to fetch images");
+  }
+}
+
+async function fetchInspectionImages() {
+  try {
+    const response = await fetch("/inspection_images");
+    const images = await response.json();
+
+    const grid = document.getElementById("inspectionGrid");
+    
+    if (!images || images.length === 0) {
+      grid.innerHTML = '<div style="color:#9ca3af;">No inspection results yet...</div>';
+      return;
+    }
+
+    grid.innerHTML = "";
+    images.sort((a, b) => {
+      return extractDateTimeObject(b.filename) - extractDateTimeObject(a.filename);
+    });
+    images.slice(0, 20).forEach(img => {
+      const card = document.createElement("div");
+      card.className = "image-card";
+
+      const timestamp = formatTimestampFromFilename(img.filename);
+      const point = extractInspectionPoint(img.filename);
+
+      card.innerHTML = `
+        <img src="${img.url}?t=${Date.now()}" />
+        <div class="image-overlay">
+          <span>📍 ${point}</span>
+          <span>🕒 ${timestamp}</span>
+        </div>
+      `;
+
+      card.onclick = () => window.open(img.url, "_blank");
+
+      grid.appendChild(card);
+    });
+
+  } catch(err){
+    console.error("Failed to fetch inspection images", err);
+  }
+}
+
+function extractInspectionPoint(filename) {
+  try {
+    filename = filename.replace(".jpg", "");
+    const parts = filename.split("_");
+
+    // inspect_point2_YYYYMMDD_HHMMSS
+    const raw = parts[1] || "";
+
+    // Convert point2 → Point 2
+    const match = raw.match(/point(\d+)/i);
+    if (match) {
+      return `Point ${match[1]}`;
+    }
+
+    return raw;
+
+  } catch(e) {
+    return "";
+  }
+}
+
+/* =============================
+   STATUS POLLING
+============================= */
+
+async function fetchStatus() {
+  try {
+    const response = await fetch("/status");
+    const data = await response.json();
+
+    const state = data.state || "IDLE";
+
+    document.getElementById("robotState").textContent = state;
+    document.getElementById("robotGoal").textContent = data.current_goal || "—";
+
+    updateProgressFromState(state);
+
+    setConnectionStatus("connected");
+
+  } catch (err) {
+    setConnectionStatus("error");
+  }
+}
+setInterval(fetchStatus, 2000);
+fetchStatus();
+
+/* =============================
+   GO TO GOAL  (/go)
+============================= */
+
+async function goToGoal(){
+  const goal = document.getElementById("manualGoalSelect").value;
+
+  try{
+    await fetch("/go",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ waypoint: goal })
+    });
+  }catch(e){
+    alert("Failed to send GO command");
+  }
+}
+
+/* =============================
+   STOP  (/stop)
+============================= */
+
+async function stopRobot(){
+  try{
+    await fetch("/stop",{ method:"POST" });
+  }catch(e){
+    alert("Failed to send STOP command");
+  }
+}
+
+/* =============================
+   CAPTURE  (/capture)
+============================= */
+
+async function captureImage(){
+  try{
+    await fetch("/capture",{ method:"POST" });
+  }catch(e){
+    alert("Failed to send CAPTURE command");
+  }
+}
+
+/* =============================
+   START MISSION  (/inspect)
+============================= */
+
+async function startMission(){
+  const waypoint = document.getElementById("waypointSelect").value;
+
+  try{
+    await fetch("/inspect",{
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ waypoint })
+    });
+  }catch(e){
+    alert("Failed to start mission");
+  }
+}
+
+/* =============================
+   CANCEL MISSION  (/stop_mission)
+============================= */
+
+async function cancelMission(){
+  try{
+    await fetch("/stop_mission",{ method:"POST" });
+  }catch(e){
+    alert("Failed to cancel mission");
+  }
+}
+
+/* =============================
+   TELEOP WEBSOCKET
+============================= */
+
+let teleopSocket = null;
+
+function initJoystick(){
+
+  teleopSocket = new WebSocket(
+    `ws://${window.location.host}/ws/teleop`
+  );
+
+  const joystick = nipplejs.create({
+    zone: document.getElementById('joystick-zone'),
+    mode: 'static',
+    position: { left:'50%', top:'50%' },
+    size:180,
+    color:'#3b82f6'
+  });
+
+  joystick.on('move', function(evt, data){
+    if(!data.vector || teleopSocket.readyState !== 1) return;
+
+    const linear = Number(data.vector.y.toFixed(2));
+    const angular = Number((-data.vector.x).toFixed(2));
+
+    document.getElementById("linVal").textContent = linear;
+    document.getElementById("angVal").textContent = angular;
+
+    teleopSocket.send(JSON.stringify({
+      linear,
+      angular
+    }));
+  });
+
+  joystick.on('end', function(){
+    document.getElementById("linVal").textContent = "0.00";
+    document.getElementById("angVal").textContent = "0.00";
+
+    if(teleopSocket.readyState === 1){
+      teleopSocket.send(JSON.stringify({
+        linear:0,
+        angular:0
+      }));
+    }
+  });
+}
+
+/* =============================
+   PROGRESS BAR CONTROL
+============================= */
+
+function updateProgress(step) {
+
+  const fill = document.getElementById("progressFill");
+  const steps = ["step1","step2","step3","step4"];
+
+  // remove active class
+  steps.forEach(id => {
+    document.getElementById(id).classList.remove("active");
+  });
+
+  const widths = [0, 30, 65, 100];
+
+  fill.style.width = widths[step-1] + "%";
+
+  document.getElementById("step" + step).classList.add("active");
+}
+
+function resetProgress(){
+  updateProgress(1);
+}
+
+
+function updateProgressFromState(state) {
+
+  switch(state) {
+
+    case "IDLE":
+      updateProgress(1);
+      break;
+
+    case "MOVING":
+      updateProgress(2);
+      break;
+
+    case "INSPECTING":
+      updateProgress(3);
+      break;
+
+    case "COMPLETED":
+      updateProgress(4);
+      break;
+
+    case "ERROR":
+      resetProgress();
+      break;
+
+    default:
+      resetProgress();
+  }
+}
+/* =============================
+   LOG POLLING
+============================= */
+
+async function fetchLogs() {
+  try {
+    const response = await fetch("/logs");
+    const data = await response.json();
+
+    const logBox = document.querySelector(".log-box");
+
+    if(!data || data.length === 0){
+      logBox.innerHTML = "No logs yet...";
+      return;
+    }
+
+    logBox.innerHTML = "";
+
+    data.slice(0,20).forEach(log => {
+
+      const entry = document.createElement("div");
+
+      const time = new Date(log.timestamp).toLocaleTimeString();
+
+      entry.innerHTML = `
+        <div style="margin-bottom:6px;">
+          <span style="color:#9ca3af; font-size:11px;">${time}</span>
+          <div>${log.message}</div>
+        </div>
+      `;
+
+      logBox.appendChild(entry);
+    });
+
+  } catch(err){
+    console.error("Failed to fetch logs");
+  }
+}
+
+function extractDateTimeObject(filename) {
+  try {
+    filename = filename.replace(".jpg", "");
+    const parts = filename.split("_");
+
+    // Handle annotated files
+    const isAnnotated = parts[parts.length - 1] === "annotated";
+
+    const datePart = isAnnotated
+      ? parts[parts.length - 3]
+      : parts[parts.length - 2];
+
+    const timePart = isAnnotated
+      ? parts[parts.length - 2]
+      : parts[parts.length - 1];
+
+    const year = datePart.substring(0,4);
+    const month = datePart.substring(4,6);
+    const day = datePart.substring(6,8);
+
+    const hour = timePart.substring(0,2);
+    const min = timePart.substring(2,4);
+    const sec = timePart.substring(4,6);
+
+    return new Date(`${year}-${month}-${day}T${hour}:${min}:${sec}`);
+
+  } catch(e) {
+    return new Date(0); // fallback
+  }
+}
+
+
+setInterval(fetchLogs, 3000);
+fetchLogs();
+
+setInterval(fetchImages, 4000);
+setInterval(fetchInspectionImages, 4000);
+
+fetchImages();
+fetchInspectionImages();
+document.addEventListener("DOMContentLoaded", initJoystick);
+
+</script>
+
+
+</body>
+</html>
