@@ -81,8 +81,19 @@ private:
   void goal_cb(
     const husky_msgs::msg::MissionGoal::SharedPtr msg)
   {
-    goal_ = msg->pose;
-    goal_name_ = msg->goal_name;
+    // goal_ = msg->poses;
+    goal_names_ = msg->goal_names;
+    poses_ = msg->poses;
+    current_index_ = 0;
+
+    if (goal_names_.empty()) {
+      RCLCPP_WARN(node_->get_logger(), "Received empty mission");
+      return;
+    }
+
+    goal_name_ = goal_names_[0];
+    goal_ = poses_[0];
+    goal_received_ = true;
     goal_received_ = true;
   }
 
@@ -94,6 +105,11 @@ private:
 
   geometry_msgs::msg::PoseStamped goal_;
   std::string goal_name_;
+  std::vector<geometry_msgs::msg::PoseStamped> poses_;
+  std::vector<std::string> goal_names_;
+  size_t current_index_{0};
+
+  uint32_t current_index_{0};
 
   bool goal_received_{false};
   uint64_t mission_id_{0};

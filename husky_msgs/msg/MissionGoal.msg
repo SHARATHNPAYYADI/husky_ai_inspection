@@ -1,2 +1,2 @@
-string goal_name
-geometry_msgs/PoseStamped pose
+string[] goal_names
+geometry_msgs/PoseStamped[] poses

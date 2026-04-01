@@ -93,32 +93,44 @@ private:
     const std::shared_ptr<husky_msgs::srv::GoToWaypoint::Request> req,
     std::shared_ptr<husky_msgs::srv::GoToWaypoint::Response> res)
   {
-    auto it = waypoints_.find(req->name);
-    if (it == waypoints_.end()) {
-      res->accepted = false;
-      res->message = "Waypoint not found";
-      RCLCPP_WARN(
-        this->get_logger(),
-        "Mission rejected: unknown waypoint '%s'",
-        req->name.c_str());
-      return;
-    }
     husky_msgs::msg::MissionGoal mission_msg;
 
-    mission_msg.goal_name = req->name;
+    for (const auto & name : req->names)
+    {
+      auto it = waypoints_.find(name);
 
-    mission_msg.pose = it->second;
-    mission_msg.pose.header.stamp = this->now();
+      if (it == waypoints_.end()) {
+        res->accepted = false;
+        res->message = "Waypoint not found: " + name;
+        return;
+      }
 
+      mission_msg.goal_names.push_back(name);
+
+      auto pose = it->second;
+      pose.header.stamp = this->now();
+
+      mission_msg.poses.push_back(pose);
+    }
+
+    // Publish mission
     goal_pub_->publish(mission_msg);
+
+    res->accepted = true;
+    res->message = "Multi-point mission published";
+
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Mission published with %zu waypoints",
+      mission_msg.goal_names.size());
 
     res->accepted = true;
     res->message = "Mission goal published";
 
-    RCLCPP_INFO(
-      this->get_logger(),
-      "Mission goal published for waypoint '%s'",
-      req->name.c_str());
+    // RCLCPP_INFO(
+    //   this->get_logger(),
+    //   "Mission goal published for waypoint '%s'",
+    //   req->names.c_str());
   }
 
   // --------------------------------------------------
