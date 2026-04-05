@@ -5,6 +5,8 @@
 #include "navigate_to_pose_bt.cpp"
 #include "wait_for_mission_goal_bt.cpp"
 #include "inspect_fire_extinguisher_bt.cpp"
+#include "next_waypoint_bt.cpp"
+#include "has_more_waypoints_bt.cpp"
 
 #include "std_srvs/srv/trigger.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -31,6 +33,8 @@ int main(int argc, char ** argv)
       return std::make_unique<NavigateToPoseBT>(name, config, node);
     });
 
+  factory.registerNodeType<HasMoreWaypoints>("HasMoreWaypoints");
+
   factory.registerBuilder<WaitForMissionGoalBT>(
     "WaitForMissionGoalBT",
     [node](const std::string& name,
@@ -46,6 +50,8 @@ int main(int argc, char ** argv)
     {
       return std::make_unique<InspectFireExtinguisherBT>(name, config, node);
     });
+
+  factory.registerNodeType<NextWaypointBT>("NextWaypointBT");
 
   auto xml_path =
     ament_index_cpp::get_package_share_directory("husky_mission_bt") +
@@ -148,11 +154,11 @@ int main(int argc, char ** argv)
 
     auto status = tree.tickRoot();
 
-    if (status == BT::NodeStatus::SUCCESS ||
-        status == BT::NodeStatus::FAILURE)
-    {
-      tree.haltTree();
-    }
+    // if (status == BT::NodeStatus::FAILURE)
+    // {
+    //   RCLCPP_INFO(node->get_logger(), "Mission completed");
+    //   tree.haltTree();
+    // }
 
     rclcpp::spin_some(node);
     rate.sleep();

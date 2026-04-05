@@ -22,6 +22,8 @@ public:
   : BT::StatefulActionNode(name, config),
     node_(node)
   {
+    RCLCPP_WARN(node_->get_logger(),
+  "NAV START TRIGGERED");
     client_ =
       rclcpp_action::create_client<NavigateToPose>(
         node_, "navigate_to_pose");
@@ -132,6 +134,11 @@ public:
 
       // 🔴 IMPORTANT: reset internal state for next ticks
       goal_sent_ = false;
+      finished_ = false;
+      succeeded_ = false;   // 🔥 REQUIRED
+      failed_ = false;
+      RCLCPP_WARN(node_->get_logger(), "NAV: finished=%d succeeded=%d goal_sent=%d",
+        finished_, succeeded_, goal_sent_);
 
       return succeeded_
         ? BT::NodeStatus::SUCCESS

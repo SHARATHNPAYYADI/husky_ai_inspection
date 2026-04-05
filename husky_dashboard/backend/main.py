@@ -101,16 +101,40 @@ def log_event(message: str):
     })
 
 
+def normalize_waypoint_names(data: dict):
+    waypoints = data.get("waypoints")
+    if waypoints is None:
+        waypoint = data.get("waypoint")
+        waypoints = [waypoint] if waypoint else []
+three 
+    if isinstance(waypoints, str):
+        waypoints = [waypoints]
+
+    if not isinstance(waypoints, list):
+        raise HTTPException(status_code=400, detail="Waypoints must be a list or string")
+
+    names = []
+    for item in waypoints:
+        if not isinstance(item, str):
+            raise HTTPException(status_code=400, detail="Each waypoint must be a string")
+
+        name = item.strip()
+        if name:
+            names.append(name)
+
+    if not names:
+        raise HTTPException(status_code=400, detail="At least one waypoint is required")
+
+    return names
+
+
 # -----------------------
 # Control APIs
 # -----------------------
 
 @app.post("/go")
 def go_to_waypoint(data: dict):
-    waypoint = data.get("waypoint")
-
-    if not waypoint:
-        raise HTTPException(status_code=400, detail="Waypoint required")
+    waypoint_names = normalize_waypoint_names(data)
 
     try:
         node = get_ros_client()
@@ -124,7 +148,7 @@ def go_to_waypoint(data: dict):
         )
 
     request = node.client.srv_type.Request()
-    request.name = waypoint
+    request.names = waypoint_names
 
     future = node.client.call_async(request)
 
@@ -141,9 +165,9 @@ def go_to_waypoint(data: dict):
 
     # Update mock status/logs (still useful!)
     robot_status["state"] = "MOVING"
-    robot_status["current_goal"] = waypoint
+    robot_status["current_goal"] = ", ".join(waypoint_names)
     robot_status["last_updated"] = datetime.now().isoformat()
-    log_event(f"ROS: moving to {waypoint}")
+    log_event(f"ROS: moving to {', '.join(waypoint_names)}")
 
     return {"success": True}
 @app.on_event("startup")
@@ -290,16 +314,12 @@ def capture_image():
 
 @app.post("/inspect")
 def run_mission(data: dict):
-
-    waypoint = data.get("waypoint")
-    log_event(f"Mission started to {waypoint}")
-
-    if not waypoint:
-        raise HTTPException(status_code=400, detail="Waypoint required")
+    waypoint_names = normalize_waypoint_names(data)
+    log_event(f"Mission started to {', '.join(waypoint_names)}")
 
     # ✅ UPDATE STATUS HERE
     robot_status["state"] = "MOVING"
-    robot_status["current_goal"] = waypoint
+    robot_status["current_goal"] = ", ".join(waypoint_names)
 
     node = get_mission_client()
 
@@ -311,7 +331,7 @@ def run_mission(data: dict):
         )
 
     request = node.client.srv_type.Request()
-    request.name = waypoint
+    request.names = waypoint_names
 
     future = node.client.call_async(request)
     # rclpy.spin_until_future_complete(node, future, timeout_sec=5.0)

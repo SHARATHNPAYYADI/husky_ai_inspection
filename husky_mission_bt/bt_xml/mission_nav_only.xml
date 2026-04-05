@@ -3,6 +3,7 @@
 
     <Sequence>
 
+      <!-- Wait for mission to arrive -->
       <WaitForMissionGoalBT
           goal="{goal}"
           goal_name="{goal_name}"
@@ -11,23 +12,38 @@
           goal_names="{goal_names}"
           index="{index}" />
 
-      <SequenceStar>
+      <!-- LOOP: re-checks HasMoreWaypoints every tick -->
+      <ReactiveSequence>
 
-        <NavigateToPoseBT
-            goal="{goal}"
-            mission_id="{mission_id}" />
-
-        <InspectFireExtinguisherBT
-            goal_name="{goal_name}" />
-
-        <NextWaypointBT
-            poses="{poses}"
-            goal_names="{goal_names}"
+        <!-- Condition: keeps returning SUCCESS while waypoints remain -->
+        <HasMoreWaypoints
             index="{index}"
-            goal="{goal}"
-            goal_name="{goal_name}" />
+            poses="{poses}" />
 
-      </SequenceStar>
+        <!-- Body: advance index, navigate, inspect -->
+        <Sequence>
+
+          <NextWaypointBT
+              goal_names="{goal_names}"
+              poses="{poses}"
+              index="{index}"
+              goal="{goal}"
+              goal_name="{goal_name}" />
+
+          <NavigateToPoseBT
+              goal="{goal}"
+              mission_id="{mission_id}" />
+
+          <InspectFireExtinguisherBT
+              goal_name="{goal_name}"
+              present="{present}"
+              confidence="{confidence}"
+              image_path="{image_path}"
+              annotated_path="{annotated_path}" />
+
+        </Sequence>
+
+      </ReactiveSequence>
 
     </Sequence>
 

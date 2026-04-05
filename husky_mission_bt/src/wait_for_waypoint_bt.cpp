@@ -66,7 +66,14 @@ private:
     const std::shared_ptr<husky_msgs::srv::GoToWaypoint::Request> req,
     std::shared_ptr<husky_msgs::srv::GoToWaypoint::Response> res)
   {
-    auto it = waypoints_.find(req->name);
+    if (req->names.empty()) {
+      res->accepted = false;
+      res->message = "At least one waypoint is required";
+      return;
+    }
+
+    const auto & name = req->names.front();
+    auto it = waypoints_.find(name);
     if (it == waypoints_.end()) {
       res->accepted = false;
       res->message = "Waypoint not found";
@@ -79,7 +86,7 @@ private:
     res->accepted = true;
     res->message = "Waypoint accepted";
     RCLCPP_INFO(node_->get_logger(),
-      "BT: Waypoint '%s' accepted", req->name.c_str());
+      "BT: Waypoint '%s' accepted", name.c_str());
   }
 
  void load_waypoints()
