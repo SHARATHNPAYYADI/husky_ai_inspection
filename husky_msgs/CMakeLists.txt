@@ -19,9 +19,11 @@ find_package(geometry_msgs REQUIRED)
 rosidl_generate_interfaces(husky_msgs
    msg/HuskyStatus.msg
    msg/MissionGoal.msg
+   msg/MissionComplete.msg
    srv/InspectFireExtinguisher.srv
    srv/GoToWaypoint.srv
    srv/CaptureImage.srv
+   srv/StartMissionSequence.srv
   DEPENDENCIES
    builtin_interfaces std_msgs geometry_msgs
 )

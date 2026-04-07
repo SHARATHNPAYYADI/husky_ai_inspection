@@ -5,6 +5,7 @@
 #include "navigate_to_pose_bt.cpp"
 #include "wait_for_mission_goal_bt.cpp"
 #include "inspect_fire_extinguisher_bt.cpp"
+#include "publish_mission_complete_bt.cpp"
 
 #include "std_srvs/srv/trigger.hpp"
 #include "geometry_msgs/msg/twist.hpp"
@@ -46,6 +47,14 @@ int main(int argc, char ** argv)
     {
       return std::make_unique<InspectFireExtinguisherBT>(name, config, node);
     });
+
+  factory.registerBuilder<PublishMissionCompleteBT>(
+  "PublishMissionCompleteBT",
+  [node](const std::string & name,
+         const BT::NodeConfiguration & config)
+  {
+    return std::make_unique<PublishMissionCompleteBT>(name, config, node);
+  });
 
   auto xml_path =
     ament_index_cpp::get_package_share_directory("husky_mission_bt") +
