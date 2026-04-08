@@ -24,14 +24,17 @@
           goal="{goal}"
           mission_id="{mission_id}" />
 
-      <InspectFireExtinguisherBT
-          goal_name="{goal_name}"
-          present="{present}"
-          confidence="{confidence}"
-          image_path="{image_path}"
-          annotated_path="{annotated_path}" />
+      <!-- 🔥 Protect inspection -->
+      <Fallback>
+        <InspectFireExtinguisherBT
+            goal_name="{goal_name}"
+            present="{present}"
+            confidence="{confidence}"
+            image_path="{image_path}"
+            annotated_path="{annotated_path}" />
+        <AlwaysSuccess/>
+      </Fallback>
 
-      <!-- NEW: notify MissionInterfaceNode that this waypoint is done -->
       <PublishMissionCompleteBT
           mission_id="{mission_id}"
           success="true" />

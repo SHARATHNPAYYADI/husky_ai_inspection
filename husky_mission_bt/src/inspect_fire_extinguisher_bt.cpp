@@ -40,6 +40,11 @@ public:
     RCLCPP_INFO(node_->get_logger(),
       "InspectFireExtinguisherBT started");
 
+    // 🔥 RESET STATE (VERY IMPORTANT)
+    done_ = false;
+    sent_ = false;
+    result_present_ = false;
+
     if (!client_->wait_for_service(std::chrono::seconds(2))) {
       RCLCPP_ERROR(node_->get_logger(),
         "Inspection service not available");
@@ -58,13 +63,13 @@ public:
     request->goal_name = goal_name;
 
     auto future =
-    client_->async_send_request(
-      request,
-      std::bind(
-        &InspectFireExtinguisherBT::response_callback,
-        this,
-        std::placeholders::_1));
-        
+      client_->async_send_request(
+        request,
+        std::bind(
+          &InspectFireExtinguisherBT::response_callback,
+          this,
+          std::placeholders::_1));
+
     sent_ = true;
 
     publishStatus("INSPECTING");
@@ -78,23 +83,28 @@ public:
       return BT::NodeStatus::RUNNING;
     }
 
-    setOutput("present", result_present_);
+    // Store result locally
+    bool present = result_present_;
+
+    setOutput("present", present);
     setOutput("confidence", result_confidence_);
     setOutput("image_path", result_image_path_);
     setOutput("annotated_path", result_annotated_path_);
 
-    if (result_present_) {
-      publishStatus("COMPLETED");
-      return BT::NodeStatus::SUCCESS;
-    } else {
-      publishStatus("ERROR");
-      return BT::NodeStatus::FAILURE;
-    }
+    // 🔥 Always continue mission
+    publishStatus(present ? "COMPLETED" : "INSPECTED");
+
+    RCLCPP_WARN(node_->get_logger(),
+      "Inspection result: present=%s",
+      present ? "true" : "false");
+
+    return BT::NodeStatus::SUCCESS;
   }
 
   void onHalted() override
   {
     done_ = false;
+    sent_ = false;
   }
 
 private:
