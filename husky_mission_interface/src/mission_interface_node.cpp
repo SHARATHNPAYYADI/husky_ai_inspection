@@ -6,6 +6,7 @@
 
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
+#include "std_srvs/srv/trigger.hpp"
 
 #include "husky_msgs/srv/go_to_waypoint.hpp"
 #include "husky_msgs/srv/start_mission_sequence.hpp"   // NEW
@@ -56,6 +57,11 @@ public:
       "/mission_goal_complete",
       rclcpp::QoS(10).reliable(),
       std::bind(&MissionInterfaceNode::complete_cb, this, std::placeholders::_1));
+
+    cancel_srv_ = this->create_service<std_srvs::srv::Trigger>(
+      "/cancel_mission_sequence",
+      std::bind(&MissionInterfaceNode::cancel_cb, this,
+                std::placeholders::_1, std::placeholders::_2));
 
     RCLCPP_INFO(this->get_logger(),
       "Mission Interface Node ready  |  services: /start_mission, /start_mission_sequence");
@@ -238,6 +244,27 @@ private:
       name.c_str(), current_mission_id_, mission_queue_.size());
   }
 
+  void cancel_cb(
+  const std::shared_ptr<std_srvs::srv::Trigger::Request>,
+  std::shared_ptr<std_srvs::srv::Trigger::Response> res)
+  {
+    RCLCPP_WARN(this->get_logger(), "MissionInterface: CANCEL RECEIVED");
+
+    // 🔥 Stop mission
+    mission_running_ = false;
+
+    // 🔥 Clear queue
+    while (!mission_queue_.empty()) {
+      mission_queue_.pop();
+    }
+
+    total_waypoints_ = 0;
+    completed_waypoints_ = 0;
+
+    res->success = true;
+    res->message = "Mission sequence cancelled and cleared";
+  }
+
   // ====================================================================
   // Members
   // ====================================================================
@@ -247,6 +274,7 @@ private:
   rclcpp::Service<husky_msgs::srv::GoToWaypoint>::SharedPtr        goto_srv_;
   rclcpp::Service<husky_msgs::srv::StartMissionSequence>::SharedPtr sequence_srv_;
   rclcpp::Subscription<husky_msgs::msg::MissionComplete>::SharedPtr complete_sub_;
+  rclcpp::Service<std_srvs::srv::Trigger>::SharedPtr cancel_srv_;
 
   // Waypoint map loaded from YAML
   std::unordered_map<std::string, geometry_msgs::msg::PoseStamped> waypoints_;

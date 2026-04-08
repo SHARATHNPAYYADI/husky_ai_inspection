@@ -743,11 +743,26 @@ async function startMission(){
 ============================= */
 
 async function cancelMission(){
-  // document.querySelectorAll(".waypoint-card")
-  // .forEach(c => c.classList.remove("disabled"));
+
   try{
     await fetch("/stop_mission",{ method:"POST" });
-    // missionActive = false;
+
+    // 🔥 IMMEDIATE UI RESET (no waiting for polling)
+    document.getElementById("robotGoal").textContent = "—";
+    document.getElementById("robotState").textContent = "IDLE";
+
+    // Reset progress
+    resetProgress();
+
+    // Enable buttons again
+    const waypointCards = document.querySelectorAll(".waypoint-card");
+    const startBtn = document.querySelector("button[onclick='startMission()']");
+
+    waypointCards.forEach(c => c.classList.remove("active"));
+    startBtn.disabled = false;
+    startBtn.style.opacity = "1";
+    startBtn.style.cursor = "pointer";
+
   }catch(e){
     alert("Failed to cancel mission");
   }
