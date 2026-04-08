@@ -382,6 +382,7 @@ header h1 { font-size:22px; font-weight:600; }
 <script>
 let selectedWaypoints = [];
 let missionActive = false;
+let lastState = null;
 /* MODE SWITCH */
 function switchMode(mode) {
   document.getElementById("manualBtn").classList.toggle("active", mode==="manual");
@@ -611,6 +612,33 @@ async function fetchStatus() {
     updateProgressFromState(state);
 
     setConnectionStatus(true);
+    const isBusy = ["MOVING", "INSPECTING"].includes(state);
+
+    const waypointCards = document.querySelectorAll(".waypoint-card");
+    const startBtn = document.querySelector("button[onclick='startMission()']");
+
+    // Disable UI when mission running
+    if (isBusy) {
+      waypointCards.forEach(c => c.classList.add("disabled"));
+      startBtn.disabled = true;
+      startBtn.style.opacity = "0.5";
+      startBtn.style.cursor = "not-allowed";
+    } else {
+      waypointCards.forEach(c => c.classList.remove("disabled"));
+      startBtn.disabled = false;
+      startBtn.style.opacity = "1";
+      startBtn.style.cursor = "pointer";
+    }
+
+    if (lastState !== "COMPLETED" && state === "COMPLETED") {
+  // Mission just finished → now reset UI
+      selectedWaypoints = [];
+
+      document.querySelectorAll(".waypoint-card")
+        .forEach(c => c.classList.remove("active"));
+    }
+
+    lastState = state;
 
     // if (state === "COMPLETED" || state === "IDLE" || state === "ERROR") {
     //   missionActive = false;
