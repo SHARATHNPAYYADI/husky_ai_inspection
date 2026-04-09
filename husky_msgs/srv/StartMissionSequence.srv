@@ -1,0 +1,4 @@
+string[] waypoint_names
+---
+bool   accepted
+string message

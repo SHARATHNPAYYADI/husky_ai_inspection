@@ -7,6 +7,8 @@
 
 <script src="https://cdn.jsdelivr.net/npm/nipplejs@0.9.0/dist/nipplejs.min.js"></script>
 
+
+
 <style>
 * { margin:0; padding:0; box-sizing:border-box; }
 
@@ -197,6 +199,35 @@ header h1 { font-size:22px; font-weight:600; }
   display:block;
   line-height:1.2;
 }
+.waypoint-grid {
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:10px;
+  margin-bottom:15px;
+}
+
+.waypoint-card {
+  padding:14px;
+  border-radius:8px;
+  border:2px solid #e5e7eb;
+  text-align:center;
+  cursor:pointer;
+  font-weight:500;
+  background:#f9fafb;
+  transition:all 0.2s ease;
+  user-select:none;
+}
+
+.waypoint-card.active {
+  border-color:#2563eb;
+  background:#2563eb;
+  color:white;
+}
+
+.waypoint-card.disabled {
+  opacity:0.5;
+  pointer-events:none;
+}
 </style>
 </head>
 <body>
@@ -283,19 +314,19 @@ header h1 { font-size:22px; font-weight:600; }
     <div class="card hidden" id="autoPanel">
       <h3>AUTONOMOUS MISSION</h3>
 
-      <select id="waypointSelect" style="width:100%; padding:10px; margin-bottom:15px;">
-        <option value="point_1">Point 1</option>
-        <option value="point_2">Point 2</option>
-        <option value="point_3">Point 3</option>
-        <option value="point_4">Point 4</option>
-        <option value="point_5">Point 5</option>
-      </select>
+      <div class="waypoint-grid">
+        <div class="waypoint-card" data-value="point_1">Point 1</div>
+        <div class="waypoint-card" data-value="point_2">Point 2</div>
+        <div class="waypoint-card" data-value="point_3">Point 3</div>
+        <div class="waypoint-card" data-value="point_4">Point 4</div>
+        <div class="waypoint-card" data-value="point_5">Point 5</div>
+      </div>
 
-      <button onclick="startMission()" style="width:100%; padding:10px; margin-bottom:10px; background:#16a34a; color:white; border:none; border-radius:6px;">
+      <button onclick="startMission()" style="width:100%; padding:10px; margin-bottom:10px; background:#16a34a; color:white; border:none; border-radius:6px; cursor:pointer;">
         START INSPECTION
       </button>
 
-      <button onclick="cancelMission()" style="width:100%; padding:10px; background:#dc2626; color:white; border:none; border-radius:6px;">
+      <button onclick="cancelMission()" style="width:100%; padding:10px; background:#dc2626; color:white; border:none; border-radius:6px; cursor:pointer;">
         CANCEL MISSION
       </button>
     </div>
@@ -349,13 +380,40 @@ header h1 { font-size:22px; font-weight:600; }
 </div>
 
 <script>
-
+let selectedWaypoints = [];
+let missionActive = false;
+let lastState = null;
 /* MODE SWITCH */
 function switchMode(mode) {
   document.getElementById("manualBtn").classList.toggle("active", mode==="manual");
   document.getElementById("autoBtn").classList.toggle("active", mode==="auto");
   document.getElementById("manualPanel").classList.toggle("hidden", mode!=="manual");
   document.getElementById("autoPanel").classList.toggle("hidden", mode!=="auto");
+}
+
+function initWaypointSelection() {
+
+  const cards = document.querySelectorAll(".waypoint-card");
+
+  cards.forEach(card => {
+    card.addEventListener("click", () => {
+
+      //if (missionActive) return;
+
+      const value = card.dataset.value;
+
+      if (selectedWaypoints.includes(value)) {
+        selectedWaypoints = selectedWaypoints.filter(v => v !== value);
+        card.classList.remove("active");
+      } else {
+        selectedWaypoints.push(value);
+        card.classList.add("active");
+      }
+
+      console.log("Selected:", selectedWaypoints);
+    });
+  });
+
 }
 
 /* =============================
@@ -553,10 +611,57 @@ async function fetchStatus() {
 
     updateProgressFromState(state);
 
-    setConnectionStatus("connected");
+    setConnectionStatus(true);
+    const isBusy = ["MOVING", "INSPECTING"].includes(state);
+
+    const waypointCards = document.querySelectorAll(".waypoint-card");
+    const startBtn = document.querySelector("button[onclick='startMission()']");
+
+    // Disable UI when mission running
+    if (isBusy) {
+      waypointCards.forEach(c => c.classList.add("disabled"));
+      startBtn.disabled = true;
+      startBtn.style.opacity = "0.5";
+      startBtn.style.cursor = "not-allowed";
+    } else {
+      waypointCards.forEach(c => c.classList.remove("disabled"));
+      startBtn.disabled = false;
+      startBtn.style.opacity = "1";
+      startBtn.style.cursor = "pointer";
+    }
+
+    if (lastState !== "COMPLETED" && state === "COMPLETED") {
+  // Mission just finished → now reset UI
+      selectedWaypoints = [];
+
+      document.querySelectorAll(".waypoint-card")
+        .forEach(c => c.classList.remove("active"));
+    }
+
+    lastState = state;
+
+    // if (state === "COMPLETED" || state === "IDLE" || state === "ERROR") {
+    //   missionActive = false;
+
+    //   document.querySelectorAll(".waypoint-card")
+    //     .forEach(c => c.classList.remove("disabled"));
+
+    // } else {
+    //   missionActive = true;
+
+    //   document.querySelectorAll(".waypoint-card")
+    //     .forEach(c => c.classList.add("disabled"));
+    // }
+
+    // if (state === "COMPLETED") {
+    //   selectedWaypoints = [];
+
+    //   document.querySelectorAll(".waypoint-card")
+    //     .forEach(c => c.classList.remove("active"));
+    // }
 
   } catch (err) {
-    setConnectionStatus("error");
+    setConnectionStatus(false, true);
   }
 }
 setInterval(fetchStatus, 2000);
@@ -609,13 +714,24 @@ async function captureImage(){
 ============================= */
 
 async function startMission(){
-  const waypoint = document.getElementById("waypointSelect").value;
+
+  // document.querySelectorAll(".waypoint-card")
+  // .forEach(c => c.classList.add("disabled"));
+
+  if (selectedWaypoints.length === 0) {
+    alert("Please select at least one waypoint");
+    return;
+  }
+
+  // missionActive = true;
+
+  console.log("Starting mission:", selectedWaypoints);
 
   try{
     await fetch("/inspect",{
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ waypoint })
+      body: JSON.stringify({ waypoints: selectedWaypoints })
     });
   }catch(e){
     alert("Failed to start mission");
@@ -627,8 +743,26 @@ async function startMission(){
 ============================= */
 
 async function cancelMission(){
+
   try{
     await fetch("/stop_mission",{ method:"POST" });
+
+    // 🔥 IMMEDIATE UI RESET (no waiting for polling)
+    document.getElementById("robotGoal").textContent = "—";
+    document.getElementById("robotState").textContent = "IDLE";
+
+    // Reset progress
+    resetProgress();
+
+    // Enable buttons again
+    const waypointCards = document.querySelectorAll(".waypoint-card");
+    const startBtn = document.querySelector("button[onclick='startMission()']");
+
+    waypointCards.forEach(c => c.classList.remove("active"));
+    startBtn.disabled = false;
+    startBtn.style.opacity = "1";
+    startBtn.style.cursor = "pointer";
+
   }catch(e){
     alert("Failed to cancel mission");
   }
@@ -815,8 +949,10 @@ setInterval(fetchInspectionImages, 4000);
 
 fetchImages();
 fetchInspectionImages();
-document.addEventListener("DOMContentLoaded", initJoystick);
-
+document.addEventListener("DOMContentLoaded", () => {
+  initJoystick();
+  initWaypointSelection();
+});
 </script>
 
 

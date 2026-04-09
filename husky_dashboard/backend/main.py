@@ -291,36 +291,37 @@ def capture_image():
 @app.post("/inspect")
 def run_mission(data: dict):
 
-    waypoint = data.get("waypoint")
-    log_event(f"Mission started to {waypoint}")
+    waypoints = data.get("waypoints")
 
-    if not waypoint:
-        raise HTTPException(status_code=400, detail="Waypoint required")
+    if not waypoints or not isinstance(waypoints, list):
+        raise HTTPException(status_code=400, detail="Waypoints list required")
 
-    # ✅ UPDATE STATUS HERE
+    log_event(f"Mission started: {waypoints}")
+
+    # Update UI state
     robot_status["state"] = "MOVING"
-    robot_status["current_goal"] = waypoint
+    robot_status["current_goal"] = waypoints[0]
 
-    node = get_mission_client()
+    node = get_mission_sequence_client()
 
     if not node.client.wait_for_service(timeout_sec=1.0):
         robot_status["state"] = "ERROR"
         raise HTTPException(
             status_code=503,
-            detail="/start_mission service not available"
+            detail="/start_mission_sequence not available"
         )
 
     request = node.client.srv_type.Request()
-    request.name = waypoint
+    request.waypoint_names = waypoints   # 🔥 KEY LINE
 
     future = node.client.call_async(request)
-    # rclpy.spin_until_future_complete(node, future, timeout_sec=5.0)
+
     while not future.done():
         time.sleep(0.05)
 
     response = future.result()
 
-    if response is None or not response.accepted:
+    if response is None or not response.success:
         robot_status["state"] = "ERROR"
         raise HTTPException(
             status_code=500,
@@ -329,40 +330,33 @@ def run_mission(data: dict):
 
     return {
         "success": True,
-        "message": "Mission started"
+        "message": "Mission sequence started"
     }
     
 @app.post("/stop_mission")
 def stop_mission():
 
-    try:
-        node = get_cancel_mission_client()
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    # 🔥 Cancel BT
+    node1 = get_cancel_mission_client()
 
-    if not node.client.wait_for_service(timeout_sec=1.0):
-        raise HTTPException(
-            status_code=503,
-            detail="/cancel_mission service not available"
-        )
-    log_event("Mission cancelled")
-    request = node.client.srv_type.Request()
+    if node1.client.wait_for_service(timeout_sec=1.0):
+        future1 = node1.client.call_async(node1.client.srv_type.Request())
+        while not future1.done():
+            time.sleep(0.05)
 
-    future = node.client.call_async(request)
-    # rclpy.spin_until_future_complete(node, future, timeout_sec=5.0)
-    while not future.done():
-        time.sleep(0.05)
+    # 🔥 Cancel mission interface
+    node2 = get_cancel_sequence_client()
 
-    response = future.result()
-    if response is None or not response.success:
-        raise HTTPException(
-            status_code=500,
-            detail=response.message if response else "Mission cancel failed"
-        )
+    if node2.client.wait_for_service(timeout_sec=1.0):
+        future2 = node2.client.call_async(node2.client.srv_type.Request())
+        while not future2.done():
+            time.sleep(0.05)
+
+    log_event("Mission fully cancelled")
 
     return {
         "success": True,
-        "message": response.message
+        "message": "Mission cancelled (BT + queue cleared)"
     }
 
 
@@ -604,3 +598,41 @@ def get_cancel_mission_client():
 
     get_cancel_mission_client.node = register_node(CancelMissionClient())
     return get_cancel_mission_client.node
+
+def get_cancel_sequence_client():
+    import rclpy
+    from rclpy.node import Node
+    from std_srvs.srv import Trigger
+
+    if hasattr(get_cancel_sequence_client, "node"):
+        return get_cancel_sequence_client.node
+
+    class CancelSeqClient(Node):
+        def __init__(self):
+            super().__init__("cancel_sequence_http_bridge")
+            self.client = self.create_client(
+                Trigger,
+                "/cancel_mission_sequence"
+            )
+
+    get_cancel_sequence_client.node = register_node(CancelSeqClient())
+    return get_cancel_sequence_client.node
+
+def get_mission_sequence_client():
+    import rclpy
+    from rclpy.node import Node
+    from husky_msgs.srv import StartMissionSequence
+
+    if hasattr(get_mission_sequence_client, "node"):
+        return get_mission_sequence_client.node
+
+    class MissionSequenceClient(Node):
+        def __init__(self):
+            super().__init__("mission_sequence_http_bridge")
+            self.client = self.create_client(
+                StartMissionSequence,
+                "/start_mission_sequence"
+            )
+
+    get_mission_sequence_client.node = register_node(MissionSequenceClient())
+    return get_mission_sequence_client.node

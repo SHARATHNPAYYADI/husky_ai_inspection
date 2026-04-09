@@ -1,3 +1,15 @@
+<!--
+  MainTree — Multi-waypoint mission
+  
+  Flow per waypoint:
+    1. WaitForMissionGoalBT  — blocks until a NEW mission_id arrives on /mission_goal
+    2. NavigateToPoseBT      — drives the robot to the goal pose
+    3. InspectFireExtinguisherBT — takes photo, runs detection
+    4. PublishMissionCompleteBT  — signals MissionInterfaceNode to send next waypoint
+
+  The BT loops indefinitely. The mission_id guard in WaitForMissionGoalBT
+  ensures it doesn't re-process the latched /mission_goal message on restart.
+-->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
 
@@ -12,12 +24,20 @@
           goal="{goal}"
           mission_id="{mission_id}" />
 
-      <InspectFireExtinguisherBT
-          goal_name="{goal_name}"
-          present="{present}"
-          confidence="{confidence}"
-          image_path="{image_path}"
-          annotated_path="{annotated_path}" />
+      <!-- 🔥 Protect inspection -->
+      <Fallback>
+        <InspectFireExtinguisherBT
+            goal_name="{goal_name}"
+            present="{present}"
+            confidence="{confidence}"
+            image_path="{image_path}"
+            annotated_path="{annotated_path}" />
+        <AlwaysSuccess/>
+      </Fallback>
+
+      <PublishMissionCompleteBT
+          mission_id="{mission_id}"
+          success="true" />
 
     </Sequence>
 
