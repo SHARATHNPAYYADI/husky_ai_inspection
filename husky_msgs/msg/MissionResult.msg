@@ -1,0 +1,7 @@
+uint64 mission_id
+string goal_name
+bool present
+float32 confidence
+string image_path
+string annotated_path
+string timestamp

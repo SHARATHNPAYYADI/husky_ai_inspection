@@ -11,6 +11,7 @@ import time
 
 import os
 import time
+import json
 
 import threading
 from std_msgs.msg import String
@@ -18,15 +19,22 @@ from std_msgs.msg import String
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 
+from husky_msgs.msg import MissionResult
+
 app = FastAPI()
 ros_node = None
 camera_node = None
 stop_service_node = None
-
+report_generated = False
 IMAGE_DIR = "/home/sharathnpayyadi/captured_images"
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
 INSPECTION_DIR = "/home/sharathnpayyadi/inspection_results"
+
+current_mission = {
+    "mission_id": None,
+    "results": []
+}
 
 import rclpy
 
@@ -50,6 +58,61 @@ class MissionStatusSubscriber(Node):
 
         if msg.data == "IDLE":
             robot_status["current_goal"] = None
+        
+        global report_generated
+
+class MissionResultSubscriber(Node):
+    def __init__(self):
+        super().__init__("mission_result_bridge")
+
+        self.subscription = self.create_subscription(
+            MissionResult,
+            "/mission_results",
+            self.callback,
+            10
+        )
+
+    def callback(self, msg):
+        global current_mission
+
+        # 🔥 If new mission → reset
+        # if current_mission["mission_id"] != msg.mission_id:
+        #     current_mission["mission_id"] = msg.mission_id
+        #     current_mission["results"] = []
+
+        # ---- Format time ----
+        try:
+            t = float(msg.timestamp)
+            dt = datetime.fromtimestamp(t)
+            time_str = dt.strftime("%H:%M:%S")
+        except:
+            time_str = msg.timestamp
+
+        # ---- Append result ----
+        current_mission["results"].append({
+            "point": msg.goal_name,
+            "status": "found" if msg.present else "missing",
+            "confidence": msg.confidence,
+            "image": f"/inspection_results/{os.path.basename(msg.image_path)}",
+            "annotated": f"/inspection_results/{os.path.basename(msg.annotated_path)}",
+            "time": time_str
+        })
+
+        global report_generated
+
+        # 🔥 Trigger AFTER result is appended
+        if "total_waypoints" in current_mission:
+            if len(current_mission["results"]) == current_mission["total_waypoints"]:
+                if not report_generated:
+                    report_generated = True
+
+                    self.get_logger().info("📝 All waypoints processed → generating report")
+
+                    generate_report_internal()
+
+        self.get_logger().info(
+            f"📥 Result received: {msg.goal_name} → {'FOUND' if msg.present else 'MISSING'}"
+        )
 
 def start_ros_spin():
     node = MissionStatusSubscriber()
@@ -154,6 +217,9 @@ def start_ros_executor():
 
     mission_node = MissionStatusSubscriber()
     executor.add_node(mission_node)
+
+    result_node = MissionResultSubscriber()
+    executor.add_node(result_node)
 
     thread = threading.Thread(target=spin, daemon=True)
     thread.start()
@@ -290,8 +356,19 @@ def capture_image():
 
 @app.post("/inspect")
 def run_mission(data: dict):
+    global current_mission
+    global report_generated
 
+    report_generated = False
+
+    
     waypoints = data.get("waypoints")
+
+    current_mission = {
+        "mission_id": None,
+        "results": [],
+        "total_waypoints": len(waypoints)
+    }
 
     if not waypoints or not isinstance(waypoints, list):
         raise HTTPException(status_code=400, detail="Waypoints list required")
@@ -368,6 +445,10 @@ def stop_mission():
 def get_status():
     return robot_status
 
+@app.get("/mission_json")
+def get_mission_json():
+    return current_mission
+
 
 @app.get("/logs")
 def get_logs():
@@ -428,6 +509,89 @@ def get_inspection_images():
 
     return results
 
+@app.get("/generate_report")
+def generate_report():
+    generate_report_internal()
+    return {"success": True}
+
+# @app.get("/generate_report")
+# def generate_report():
+
+#     global current_mission
+
+#     if not current_mission["results"]:
+#         return {"error": "No mission data available"}
+
+#     # ---- Create missions folder ----
+#     missions_dir = os.path.join(INSPECTION_DIR, "missions")
+#     os.makedirs(missions_dir, exist_ok=True)
+
+#     # ---- Create unique mission folder ----
+#     folder_name = datetime.now().strftime("mission_%Y%m%d_%H%M%S")
+#     mission_folder = os.path.join(missions_dir, folder_name)
+#     os.makedirs(mission_folder, exist_ok=True)
+
+#     # ---- Save JSON ----
+#     json_path = os.path.join(mission_folder, "mission.json")
+
+#     with open(json_path, "w") as f:
+#         json.dump(current_mission, f, indent=2)
+
+#     # ---- Summary ----
+#     total_points = len(current_mission["results"])
+#     detected = sum(1 for r in current_mission["results"] if r["status"] == "found")
+#     missing = sum(1 for r in current_mission["results"] if r["status"] == "missing")
+
+#     # ---- Generate rows ----
+#     rows_html = ""
+
+#     for r in current_mission["results"]:
+
+#         status_class = "found" if r["status"] == "found" else "missing"
+#         row_class = "missing-row" if r["status"] == "missing" else ""
+
+#         rows_html += f"""
+#         <tr class="{row_class}">
+#             <td>{r['point']}</td>
+#             <td>
+#                 <a href="{r['annotated']}" target="_blank">
+#                     <img src="{r['annotated']}">
+#                 </a>
+#             </td>
+#             <td class="{status_class}">{r['status'].upper()}</td>
+#             <td>{r['time']}</td>
+#         </tr>
+#         """
+
+#     # ---- Load template ----
+#     template_path = os.path.join(BASE_DIR, "report_template.html")
+
+#     with open(template_path, "r") as f:
+#         template = f.read()
+
+#     # ---- Fill template ----
+#     html_content = template.replace(
+#         "{{generated_time}}",
+#         datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#     )
+#     html_content = html_content.replace("{{total_points}}", str(total_points))
+#     html_content = html_content.replace("{{inspected}}", str(total_points))
+#     html_content = html_content.replace("{{detected}}", str(detected))
+#     html_content = html_content.replace("{{missing}}", str(missing))
+#     html_content = html_content.replace("{{rows}}", rows_html)
+
+#     # ---- Save HTML ----
+#     html_path = os.path.join(mission_folder, "report.html")
+
+#     with open(html_path, "w") as f:
+#         f.write(html_content)
+
+#     return {
+#         "success": True,
+#         "mission_folder": mission_folder,
+#         "report_url": f"/inspection_results/missions/{folder_name}/report.html"
+#     }
+
 
 @app.websocket("/ws/teleop")
 async def teleop_ws(ws: WebSocket):
@@ -473,6 +637,30 @@ def get_ros_client():
     # ros_node = WaypointClient()
     ros_node = register_node(WaypointClient())
     return ros_node
+
+def generate_report_internal():
+    global current_mission
+
+    if not current_mission["results"]:
+        print("No mission data, skipping report")
+        return
+
+    missions_dir = os.path.join(INSPECTION_DIR, "missions")
+    os.makedirs(missions_dir, exist_ok=True)
+
+    folder_name = datetime.now().strftime("mission_%Y%m%d_%H%M%S")
+    mission_folder = os.path.join(missions_dir, folder_name)
+    os.makedirs(mission_folder, exist_ok=True)
+
+    # Save JSON
+    json_path = os.path.join(mission_folder, "mission.json")
+    with open(json_path, "w") as f:
+        json.dump(current_mission, f, indent=2)
+
+    # Generate HTML (same as before)
+    # (reuse your existing logic here)
+
+    print(f"✅ Report saved: {mission_folder}")
 
 def get_camera_client():
     global camera_node

@@ -20,6 +20,7 @@ rosidl_generate_interfaces(husky_msgs
    msg/HuskyStatus.msg
    msg/MissionGoal.msg
    msg/MissionComplete.msg
+   msg/MissionResult.msg
    srv/InspectFireExtinguisher.srv
    srv/GoToWaypoint.srv
    srv/CaptureImage.srv
