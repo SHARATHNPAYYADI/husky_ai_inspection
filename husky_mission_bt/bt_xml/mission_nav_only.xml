@@ -28,6 +28,7 @@
       <Fallback>
         <InspectFireExtinguisherBT
             goal_name="{goal_name}"
+            mission_id="{mission_id}"
             present="{present}"
             confidence="{confidence}"
             image_path="{image_path}"

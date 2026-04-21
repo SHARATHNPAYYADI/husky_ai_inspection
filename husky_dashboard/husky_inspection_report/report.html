@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Husky Inspection Report</title>
+
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 40px;
+    background: #f7f9fb;
+    color: #333;
+  }
+
+  h1 {
+    text-align: center;
+    margin-bottom: 5px;
+  }
+
+  .subtitle {
+    text-align: center;
+    color: #666;
+    margin-bottom: 30px;
+  }
+
+  .summary {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .card {
+    flex: 1;
+    margin: 0 10px;
+    padding: 15px;
+    background: white;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+  }
+
+  .card h2 {
+    margin: 0;
+    font-size: 22px;
+  }
+
+  .card p {
+    margin: 5px 0 0;
+    color: #777;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  th {
+    background: #f0f2f5;
+    padding: 12px;
+    text-align: left;
+  }
+
+  td {
+    padding: 12px;
+    border-top: 1px solid #eee;
+    vertical-align: middle;
+  }
+
+  img {
+    width: 180px;
+    border-radius: 8px;
+  }
+
+  .found {
+    color: green;
+    font-weight: bold;
+  }
+
+  .missing {
+    color: red;
+    font-weight: bold;
+  }
+
+  tr.missing-row {
+    background-color: #ffecec;
+  }
+
+</style>
+</head>
+
+<body>
+
+<h1>Husky Inspection Report</h1>
+<div class="subtitle">
+  Generated: 2026-04-09 10:30:00
+</div>
+
+<div class="summary">
+  <div class="card">
+    <h2>2</h2>
+    <p>Total Points</p>
+  </div>
+
+  <div class="card">
+    <h2>2</h2>
+    <p>Inspected</p>
+  </div>
+
+  <div class="card">
+    <h2>1</h2>
+    <p>Detected</p>
+  </div>
+
+  <div class="card">
+    <h2>1</h2>
+    <p>Missing</p>
+  </div>
+</div>
+
+<table>
+  <tr>
+    <th>Point</th>
+    <th>Image</th>
+    <th>Result</th>
+    <th>Time</th>
+  </tr>
+
+  
+    <tr class="">
+        <td>P1</td>
+        <td><img src="images/inspect_point1_20260217_044651_annotated.jpg"></td>
+        <td class="found">FOUND</td>
+        <td>10:32:12</td>
+    </tr>
+    
+    <tr class="missing-row">
+        <td>P2</td>
+        <td><img src="images/inspect_point1_20260217_044651_annotated.jpg"></td>
+        <td class="missing">MISSING</td>
+        <td>10:33:45</td>
+    </tr>
+    
+
+</table>
+
+</body>
+</html>

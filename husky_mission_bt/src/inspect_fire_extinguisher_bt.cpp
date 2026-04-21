@@ -4,6 +4,7 @@
 #include "behaviortree_cpp_v3/action_node.h"
 #include "husky_msgs/srv/inspect_fire_extinguisher.hpp"
 #include "std_msgs/msg/string.hpp"
+#include "husky_msgs/msg/mission_result.hpp"
 
 class InspectFireExtinguisherBT : public BT::StatefulActionNode
 {
@@ -22,12 +23,15 @@ public:
     status_pub_ =
       node_->create_publisher<std_msgs::msg::String>(
         "/mission_status", 10);
+    result_pub_ = node_->create_publisher<husky_msgs::msg::MissionResult>(
+        "/mission_results", 10);
   }
 
   static BT::PortsList providedPorts()
   {
     return {
       BT::InputPort<std::string>("goal_name"),
+      BT::InputPort<uint64_t>("mission_id"),
       BT::OutputPort<bool>("present"),
       BT::OutputPort<double>("confidence"),
       BT::OutputPort<std::string>("image_path"),
@@ -87,6 +91,25 @@ public:
     bool present = result_present_;
 
     setOutput("present", present);
+    uint64_t mission_id = 0;
+    getInput("mission_id", mission_id);
+
+    std::string goal_name;
+    getInput("goal_name", goal_name);
+
+    auto msg = husky_msgs::msg::MissionResult();
+    msg.mission_id = mission_id;
+    msg.goal_name = goal_name;
+    msg.present = present;
+    msg.confidence = result_confidence_;
+    msg.image_path = result_image_path_;
+    msg.annotated_path = result_annotated_path_;
+
+    // timestamp
+    auto now = node_->get_clock()->now();
+    msg.timestamp = std::to_string(now.seconds());
+
+    result_pub_->publish(msg);
     setOutput("confidence", result_confidence_);
     setOutput("image_path", result_image_path_);
     setOutput("annotated_path", result_annotated_path_);
@@ -132,6 +155,7 @@ private:
   rclcpp::Node::SharedPtr node_;
   rclcpp::Client<husky_msgs::srv::InspectFireExtinguisher>::SharedPtr client_;
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr status_pub_;
+  rclcpp::Publisher<husky_msgs::msg::MissionResult>::SharedPtr result_pub_;
 
   bool sent_{false};
   bool done_{false};
