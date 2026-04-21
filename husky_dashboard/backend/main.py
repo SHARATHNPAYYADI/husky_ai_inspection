@@ -514,6 +514,56 @@ def generate_report():
     generate_report_internal()
     return {"success": True}
 
+@app.get("/missions")
+def list_missions():
+
+    missions_dir = os.path.join(INSPECTION_DIR, "missions")
+
+    if not os.path.exists(missions_dir):
+        return []
+
+    folders = []
+
+    # ---- Collect valid folders with datetime ----
+    for folder in os.listdir(missions_dir):
+
+        folder_path = os.path.join(missions_dir, folder)
+
+        if not os.path.isdir(folder_path):
+            continue
+
+        try:
+            parts = folder.split("_")
+
+            # Expected: mission_YYYYMMDD_HHMMSS
+            date_part = parts[1]
+            time_part = parts[2]
+
+            dt = datetime.strptime(date_part + time_part, "%Y%m%d%H%M%S")
+
+        except Exception:
+            # Skip invalid folders
+            continue
+
+        folders.append((folder, dt))
+
+    # ---- Sort by datetime DESC (latest first) ----
+    folders.sort(key=lambda x: x[1], reverse=True)
+
+    missions = []
+
+    for folder, dt in folders:
+
+        formatted_time = dt.strftime("%d %b %H:%M")
+
+        missions.append({
+            "name": folder,
+            "time": formatted_time,
+            "report_url": f"/inspection_results/missions/{folder}/report.html"
+        })
+
+    return missions
+
 # @app.get("/generate_report")
 # def generate_report():
 
@@ -645,20 +695,66 @@ def generate_report_internal():
         print("No mission data, skipping report")
         return
 
+    # ---- Create missions folder ----
     missions_dir = os.path.join(INSPECTION_DIR, "missions")
     os.makedirs(missions_dir, exist_ok=True)
 
+    # ---- Create mission folder ----
     folder_name = datetime.now().strftime("mission_%Y%m%d_%H%M%S")
     mission_folder = os.path.join(missions_dir, folder_name)
     os.makedirs(mission_folder, exist_ok=True)
 
-    # Save JSON
+    # ---- Save JSON ----
     json_path = os.path.join(mission_folder, "mission.json")
     with open(json_path, "w") as f:
         json.dump(current_mission, f, indent=2)
 
-    # Generate HTML (same as before)
-    # (reuse your existing logic here)
+    # ---- Summary ----
+    total_points = len(current_mission["results"])
+    detected = sum(1 for r in current_mission["results"] if r["status"] == "found")
+    missing = sum(1 for r in current_mission["results"] if r["status"] == "missing")
+
+    # ---- Generate rows ----
+    rows_html = ""
+
+    for r in current_mission["results"]:
+        status_class = "found" if r["status"] == "found" else "missing"
+        row_class = "missing-row" if r["status"] == "missing" else ""
+
+        rows_html += f"""
+        <tr class="{row_class}">
+            <td>{r['point']}</td>
+            <td>
+                <a href="{r['annotated']}" target="_blank">
+                    <img src="{r['annotated']}">
+                </a>
+            </td>
+            <td class="{status_class}">{r['status'].upper()}</td>
+            <td>{r['time']}</td>
+        </tr>
+        """
+
+    # ---- Load template ----
+    template_path = os.path.join(BASE_DIR, "report_template.html")
+
+    with open(template_path, "r") as f:
+        template = f.read()
+
+    # ---- Fill template ----
+    html_content = template.replace(
+        "{{generated_time}}",
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    )
+    html_content = html_content.replace("{{total_points}}", str(total_points))
+    html_content = html_content.replace("{{inspected}}", str(total_points))
+    html_content = html_content.replace("{{detected}}", str(detected))
+    html_content = html_content.replace("{{missing}}", str(missing))
+    html_content = html_content.replace("{{rows}}", rows_html)
+
+    # ---- Save HTML ----
+    html_path = os.path.join(mission_folder, "report.html")
+    with open(html_path, "w") as f:
+        f.write(html_content)
 
     print(f"✅ Report saved: {mission_folder}")
 

@@ -361,6 +361,14 @@ header h1 { font-size:22px; font-weight:600; }
     </div>
 
     <div class="card">
+      <h3>REPORTS</h3>
+
+      <div id="reportsTable" style="max-height:200px; overflow-y:auto;">
+        <div style="color:#9ca3af;">No reports yet...</div>
+      </div>
+    </div>
+
+    <div class="card">
       <h3>CAPTURED IMAGES</h3>
       <div class="images-grid" id="imagesGrid">
         <div style="color:#9ca3af;">No images captured yet...</div>
@@ -383,6 +391,60 @@ header h1 { font-size:22px; font-weight:600; }
 let selectedWaypoints = [];
 let missionActive = false;
 let lastState = null;
+
+async function fetchReports() {
+  try {
+    const response = await fetch("/missions");
+    const data = await response.json();
+
+    const container = document.getElementById("reportsTable");
+
+    if (!data || data.length === 0) {
+      container.innerHTML = '<div style="color:#9ca3af;">No reports yet...</div>';
+      return;
+    }
+
+    container.innerHTML = "";
+
+    data.forEach(mission => {
+      const row = document.createElement("div");
+
+      row.style.display = "flex";
+      row.style.justifyContent = "space-between";
+      row.style.alignItems = "center";
+      row.style.padding = "8px 0";
+      row.style.borderBottom = "1px solid #e5e7eb";
+      row.style.fontSize = "13px";
+
+      row.innerHTML = `
+        <div>
+          <div><strong>${mission.name}</strong></div>
+          <div style="color:#6b7280;">🕒 ${mission.time}</div>
+        </div>
+
+        <button style="
+          padding:6px 10px;
+          background:#2563eb;
+          color:white;
+          border:none;
+          border-radius:5px;
+          cursor:pointer;
+        ">
+          Open
+        </button>
+      `;
+
+      row.querySelector("button").onclick = () => {
+        window.open(mission.report_url, "_blank");
+      };
+
+      container.appendChild(row);
+    });
+
+  } catch (err) {
+    console.error("Failed to fetch reports", err);
+  }
+}
 /* MODE SWITCH */
 function switchMode(mode) {
   document.getElementById("manualBtn").classList.toggle("active", mode==="manual");
@@ -953,6 +1015,9 @@ document.addEventListener("DOMContentLoaded", () => {
   initJoystick();
   initWaypointSelection();
 });
+
+setInterval(fetchReports, 5000);
+setInterval(fetchReports, 5000);
 </script>
 
 

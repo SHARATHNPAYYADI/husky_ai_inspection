@@ -94,41 +94,28 @@
 <body>
 
 <h1>Husky Inspection Report</h1>
-<div style="text-align:right; margin-bottom:20px;">
-  <button onclick="window.print()" style="
-    padding:10px 16px;
-    background:#2563eb;
-    color:white;
-    border:none;
-    border-radius:6px;
-    cursor:pointer;
-    font-weight:600;
-  ">
-    Download PDF
-  </button>
-</div>
 <div class="subtitle">
-  Generated: {{generated_time}}
+  Generated: 2026-04-09 10:30:00
 </div>
 
 <div class="summary">
   <div class="card">
-    <h2>{{total_points}}</h2>
+    <h2>2</h2>
     <p>Total Points</p>
   </div>
 
   <div class="card">
-    <h2>{{inspected}}</h2>
+    <h2>2</h2>
     <p>Inspected</p>
   </div>
 
   <div class="card">
-    <h2>{{detected}}</h2>
+    <h2>1</h2>
     <p>Detected</p>
   </div>
 
   <div class="card">
-    <h2>{{missing}}</h2>
+    <h2>1</h2>
     <p>Missing</p>
   </div>
 </div>
@@ -141,7 +128,21 @@
     <th>Time</th>
   </tr>
 
-  {{rows}}
+  
+    <tr class="">
+        <td>P1</td>
+        <td><img src="images/inspect_point1_20260217_044651_annotated.jpg"></td>
+        <td class="found">FOUND</td>
+        <td>10:32:12</td>
+    </tr>
+    
+    <tr class="missing-row">
+        <td>P2</td>
+        <td><img src="images/inspect_point1_20260217_044651_annotated.jpg"></td>
+        <td class="missing">MISSING</td>
+        <td>10:33:45</td>
+    </tr>
+    
 
 </table>
 

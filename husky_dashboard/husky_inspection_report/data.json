@@ -1,0 +1,17 @@
+{
+  "generated_time": "2026-04-09 10:30:00",
+  "points": [
+    {
+      "name": "P1",
+      "time": "10:32:12",
+      "status": "found",
+      "image": "images/inspect_point1_20260217_044651_annotated.jpg"
+    },
+    {
+      "name": "P2",
+      "time": "10:33:45",
+      "status": "missing",
+      "image": "images/inspect_point1_20260217_044651_annotated.jpg"
+    }
+  ]
+}
