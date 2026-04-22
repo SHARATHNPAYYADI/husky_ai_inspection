@@ -1,0 +1,35 @@
+model {
+  file: "model.sdf"
+}
+name: "KITCHEN_SET_CLASSIC_40HwCHfeG0H"
+description: "KITCHEN SET - CLASSIC\nChildren can enjoy decorating their dollhouse with the Classic set of furniture while developing their imagination and creating more interest time."
+version: 1
+authors {
+  name: "Google"
+  email: "scanned-objects@google.com"
+}
+legal {
+  copyright: "Copyright 2020 Google LLC."
+  license: "Creative Commons Attribution 4.0 International"
+}
+annotations {
+  key: "brand"
+  value: "PlanToys"
+}
+annotations {
+  key: "mpn"
+  value: "9013"
+}
+annotations {
+  key: "sku"
+  value: "0901302"
+}
+compatibilities {
+  name: "Gazebo"
+  version {
+    major: 11
+  }
+}
+categories {
+  first: "Toys"
+}
