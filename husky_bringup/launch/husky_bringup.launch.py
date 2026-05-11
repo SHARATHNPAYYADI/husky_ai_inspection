@@ -29,7 +29,7 @@ def generate_launch_description():
 
     declare_map = DeclareLaunchArgument(
         'map',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml'
+        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/gazebo_world/my_map.yaml'
     )
 
     declare_params = DeclareLaunchArgument(

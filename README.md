@@ -101,7 +101,7 @@ ros2 launch husky_gazebo gazebo.launch.py world_path:=/home/sharathnpayyadi/husk
 ### Step 2 – Start Localization
 
 ```bash
-ros2 launch nav2_bringup localization_launch.py   use_sim_time:=true   map:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
+ros2 launch nav2_bringup localization_launch.py   use_sim_time:=true   map:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/gazebo_world/my_map.yaml params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
 
 ```
 
@@ -114,7 +114,7 @@ ros2 run husky_init_pose auto_initial_pose
 ### Step 4 – Start Navigation Stack
 
 ```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map:=src/husky_ai_inspection/husky_nav2/maps/my_map.yaml   params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
+ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map:=src/husky_ai_inspection/husky_nav2/maps/gazebo_world/my_map.yaml   params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
 
 ```
 
