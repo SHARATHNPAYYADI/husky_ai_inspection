@@ -142,7 +142,7 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            '/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/config/ekf.yaml'
+            '/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_nav2/config/ekf.yaml'
         ]
     )
     # Launch husky_control/control.launch.py which is just robot_localization.

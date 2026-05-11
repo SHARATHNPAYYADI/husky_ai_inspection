@@ -2292,7 +2292,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Standard Toilet/meshes/toilet.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Standard Toilet/meshes/toilet.dae</uri>
             </mesh>
           </geometry>
           <material>
@@ -2424,7 +2424,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Bathtub/meshes/bathtub.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Bathtub/meshes/bathtub.dae</uri>
             </mesh>
           </geometry>
           <material>
@@ -2568,7 +2568,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2588,7 +2588,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -2620,7 +2620,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2640,7 +2640,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -2672,7 +2672,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2692,7 +2692,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -2724,7 +2724,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2744,7 +2744,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -2776,7 +2776,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2796,7 +2796,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>
@@ -2828,7 +2828,7 @@
         <collision name='collision'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
           <max_contacts>10</max_contacts>
@@ -2848,7 +2848,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
+              <uri>/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/models/Fire_Extinguisher/meshes/extinguisher.dae</uri>
             </mesh>
           </geometry>
         </visual>

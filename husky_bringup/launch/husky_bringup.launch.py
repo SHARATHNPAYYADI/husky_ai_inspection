@@ -24,17 +24,17 @@ def generate_launch_description():
 
     declare_world = DeclareLaunchArgument(
         'world_path',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site_fire_extuinguisher.world'
+        default_value='/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site_fire_extuinguisher.world'
     )
 
     declare_map = DeclareLaunchArgument(
         'map',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml'
+        default_value='/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml'
     )
 
     declare_params = DeclareLaunchArgument(
         'params_file',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml'
+        default_value='/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml'
     )
 
     # --------------------

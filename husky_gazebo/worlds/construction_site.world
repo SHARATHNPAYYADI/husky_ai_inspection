@@ -2232,7 +2232,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Standard Toilet/meshes/toilet.dae</uri>
+              <uri>/home/ubuntu/.gazebo/models/Standard Toilet/meshes/toilet.dae</uri>
             </mesh>
           </geometry>
           <material>
@@ -2364,7 +2364,7 @@
         <visual name='visual'>
           <geometry>
             <mesh>
-              <uri>/home/sharathnpayyadi/.gazebo/models/Bathtub/meshes/bathtub.dae</uri>
+              <uri>/home/ubuntu/.gazebo/models/Bathtub/meshes/bathtub.dae</uri>
             </mesh>
           </geometry>
           <material>
