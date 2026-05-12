@@ -7,7 +7,10 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 from ament_index_python.packages import get_package_share_directory
+import os
 
+# husky_ai_pkg = get_package_share_directory('husky_ai_inspection')
+husky_nav2 = get_package_share_directory('husky_nav2')
 from pathlib import Path
 
 ARGUMENTS = [
@@ -142,7 +145,11 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            '/home/ubuntu/husky_ws/src/husky_ai_inspection/husky_nav2/config/ekf.yaml'
+            os.path.join(
+                husky_nav2,
+                'config',
+                'ekf.yaml'
+            )
         ]
     )
     # Launch husky_control/control.launch.py which is just robot_localization.
