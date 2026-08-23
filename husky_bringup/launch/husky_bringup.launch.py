@@ -40,7 +40,7 @@ def generate_launch_description():
         default_value=os.path.join(
             husky_nav2_pkg,
             'maps',
-            'my_map.yaml'
+            'small_factory.yaml'
         )
     )
 

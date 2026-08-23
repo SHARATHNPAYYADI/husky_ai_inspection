@@ -20,7 +20,9 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'auto_initial_pose = husky_init_pose.auto_initial_pose:main'
+            'auto_initial_pose = husky_init_pose.auto_initial_pose:main',
+            'odom_deadband = husky_init_pose.odom_deadband:main',
+            'scan_filter = husky_init_pose.scan_filter:main'
         ],
     },
 )
