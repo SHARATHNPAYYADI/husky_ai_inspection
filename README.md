@@ -5,7 +5,7 @@
 This repository contains a **simulation-first inspection stack for the Clearpath Husky UGV**, built using **ROS 2, Gazebo, and Nav2**.
 The stack now covers full multi-waypoint mission execution — a behavior-tree mission runner, a mission interface node, and a web dashboard for launching missions and viewing inspection reports — on top of the navigation/localization foundation.
 
-Development is intentionally incremental: navigation reliability first, then mission orchestration and reporting. AI-based detection is under active development and not covered in this README yet.
+Development is intentionally incremental: navigation reliability first, then mission orchestration and reporting, then AI-based detection — a YOLO fire-extinguisher detector now runs as part of each inspection, flagging each waypoint as found/missing in the generated report.
 
 ---
 
@@ -36,7 +36,7 @@ This repository extends the upstream stack with:
 - Single and multi-waypoint mission execution (behavior tree): ✅ Working
 - Mission cancel support: ✅ Working
 - Web dashboard for mission control and report generation: ✅ Working
-- AI-based inspection (vision / detection pipeline): 🚧 In progress
+- AI-based inspection (YOLO fire-extinguisher detection, found/missing per waypoint): ✅ Working
 
 ---
 
@@ -54,7 +54,7 @@ husky_ai_inspection/
 ├── husky_mission_bt/            # Behavior-tree mission runner (nav + inspect + report per waypoint)
 ├── husky_msgs/                  # Shared messages/services (MissionGoal, MissionResult, StartMissionSequence, ...)
 ├── husky_dashboard/              # FastAPI backend + web frontend for mission control and reports
-├── husky_vision_detector/       # Vision/detection pipeline (in progress, not covered here)
+├── husky_vision_detector/       # YOLO-based fire-extinguisher detection, run per waypoint during inspection
 ├── husky_base/ husky_control/ husky_description/
 ├── husky_desktop/ husky_models/ husky_robot/
 ├── husky_simulator/ husky_viz/  # Upstream Clearpath Husky ROS 2 packages
