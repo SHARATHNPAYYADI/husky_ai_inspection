@@ -2,10 +2,10 @@
 
 ## Overview
 
-This repository contains a **simulation-first inspection stack for the Clearpath Husky UGV**, built using **ROS 2, Gazebo, and Nav2**.  
-The project focuses on creating a stable navigation and localization foundation in simulation, which will later be extended with **AI-based inspection capabilities**.
+This repository contains a **simulation-first inspection stack for the Clearpath Husky UGV**, built using **ROS 2, Gazebo, and Nav2**.
+The stack now covers full multi-waypoint mission execution — a behavior-tree mission runner, a mission interface node, and a web dashboard for launching missions and viewing inspection reports — on top of the navigation/localization foundation.
 
-Development is intentionally incremental: navigation reliability first, intelligence next.
+Development is intentionally incremental: navigation reliability first, then mission orchestration and reporting. AI-based detection is under active development and not covered in this README yet.
 
 ---
 
@@ -13,14 +13,15 @@ Development is intentionally incremental: navigation reliability first, intellig
 
 This project is based on the open-source **Husky UGV ROS 2 stack** maintained by **Clearpath Robotics**.
 
-Original repository:  
+Original repository:
 https://github.com/husky/husky (humble-devel)
 
 This repository extends the upstream stack with:
 - Custom Gazebo simulation environments
 - Navigation and localization workflows
 - Waypoint recording logic
-- A future AI inspection pipeline (planned)
+- A behavior-tree-driven multi-waypoint mission system, with mission start/cancel services
+- A web dashboard (FastAPI backend + frontend) for driving missions, teleop, and viewing generated inspection reports
 
 ---
 
@@ -32,25 +33,10 @@ This repository extends the upstream stack with:
 - Automatic initial pose setting: ✅ Working
 - Navigation stack bring-up: ✅ Working
 - Waypoint recording via RViz: ✅ Working
-
----
-
-## Features
-
-### Implemented
-
-- Gazebo simulation with Clearpath Husky
-- Custom construction-site world
-- Nav2 localization using a pre-built map
-- Automatic initial pose publisher
-- Navigation stack bring-up
-- Waypoint recording from RViz interactions
-
-### In Progress / Planned
-
-- AI-based inspection (vision / detection pipeline)
-- SLAM tuning and localization improvements
-- Autonomous navigation through recorded waypoints
+- Single and multi-waypoint mission execution (behavior tree): ✅ Working
+- Mission cancel support: ✅ Working
+- Web dashboard for mission control and report generation: ✅ Working
+- AI-based inspection (vision / detection pipeline): 🚧 In progress
 
 ---
 
@@ -58,17 +44,30 @@ This repository extends the upstream stack with:
 
 ```text
 husky_ai_inspection/
-├── husky_gazebo/              # Gazebo simulation and world files
-├── husky_nav2/                # Nav2 maps, parameters, and configuration
-├── husky_init_pose/           # Automatic initial pose node
-├── husky_waypoint_recorder/   # Waypoint recording node
+├── husky_bringup/              # Top-level bring-up launch files
+├── husky_gazebo/                # Gazebo simulation and world files
+├── husky_nav2/                  # Nav2 maps, parameters, and configuration
+├── husky_navigation/            # Navigation-related configuration
+├── husky_init_pose/             # Automatic initial pose node
+├── husky_waypoint_recorder/     # Waypoint recording and single-point navigation nodes
+├── husky_mission_interface/     # Mission entry point: /start_mission, /start_mission_sequence, cancel
+├── husky_mission_bt/            # Behavior-tree mission runner (nav + inspect + report per waypoint)
+├── husky_msgs/                  # Shared messages/services (MissionGoal, MissionResult, StartMissionSequence, ...)
+├── husky_dashboard/              # FastAPI backend + web frontend for mission control and reports
+├── husky_vision_detector/       # Vision/detection pipeline (in progress, not covered here)
+├── husky_base/ husky_control/ husky_description/
+├── husky_desktop/ husky_models/ husky_robot/
+├── husky_simulator/ husky_viz/  # Upstream Clearpath Husky ROS 2 packages
 ```
 
 ## Prerequisites
 
-- ROS 2 (tested with **Humble / Jazzy**)
+- ROS 2 (tested with **Humble**)
 - Gazebo
 - Nav2
+- BehaviorTree.CPP v3 (`behaviortree_cpp_v3`) for `husky_mission_bt`
+- `yaml-cpp`
+- Python 3 with `fastapi`, `uvicorn`, `rclpy` for `husky_dashboard`
 - Clearpath Husky simulation packages
 - `colcon` build tools
 
@@ -90,58 +89,80 @@ source install/setup.bash
 
 ## Instructions
 
-Follow the steps in order
+The stack now starts with just two commands: one bring-up launch file for the full simulation/navigation/mission stack, and one command for the web dashboard.
 
-### Step 1 – Launch Gazebo Simulation
-
-```bash
-ros2 launch husky_gazebo gazebo.launch.py world_path:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site.world
-```
-
-### Step 2 – Start Localization
+### Step 1 – Launch the Full Stack
 
 ```bash
-ros2 launch nav2_bringup localization_launch.py   use_sim_time:=true   map:=/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
-
+ros2 launch husky_bringup husky_bringup.launch.py
 ```
 
-### Step 3 – Set Initial Pose Automatically
+This single launch file (`husky_bringup/launch/husky_bringup.launch.py`) brings up everything needed to run a mission:
+
+- Gazebo simulation (default world: `construction_site_fire_extuinguisher.world`)
+- Nav2 localization (AMCL against `my_map.yaml`)
+- Automatic initial pose setting (`husky_init_pose`)
+- Nav2 navigation stack
+- Waypoint executor (`husky_waypoint_recorder/go_to_waypoint`)
+- Vision/detection nodes (`image_capture_service`, `yolo_fire_extinguisher_node`)
+- Mission behavior tree runner (`husky_mission_bt`) and mission interface node (`husky_mission_interface`)
+
+It accepts optional launch arguments to override defaults:
 
 ```bash
-ros2 run husky_init_pose auto_initial_pose
+ros2 launch husky_bringup husky_bringup.launch.py \
+  use_sim_time:=true \
+  world_path:=/path/to/world \
+  map:=/path/to/map.yaml \
+  params_file:=/path/to/nav2_params.yaml
 ```
 
-### Step 4 – Start Navigation Stack
-
-```bash
-ros2 launch nav2_bringup navigation_launch.py use_sim_time:=true map:=src/husky_ai_inspection/husky_nav2/maps/my_map.yaml   params_file:=src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml
-
-```
-
-### Step 5 – Launch RViz
+Once running, launch RViz separately if you want visualization:
 
 ```bash
 rviz2
 ```
 
-### Step 6a – Go to all points automatically 
+Start a mission over the `/start_mission_sequence` service for multiple waypoints (or `/start_mission` for a single waypoint). The BT loops per waypoint: navigate → inspect → publish mission-complete, until the sequence finishes. A running mission can be cancelled via the corresponding cancel service exposed by `mission_interface_node`.
+
+### Step 2 – Web Dashboard (mission control, teleop, reports)
 
 ```bash
-ros2 run husky_waypoint_recorder follow_waypoints
+cd husky_dashboard/backend
+uvicorn main:app --reload
 ```
 
-or
+This single command starts the FastAPI backend and serves the frontend (the backend mounts the `husky_dashboard/frontend` directory as static files), so there's no separate frontend server to run. The dashboard exposes endpoints for starting/stopping missions, teleop over a WebSocket, image capture, and inspection report generation/browsing (`/go`, `/stop`, `/capture`, `/inspect`, `/stop_mission`, `/status`, `/missions`, `/generate_report`, `/ws/teleop`, among others).
 
-### Step 6b – Go to points using the service 
-
-```bash
-ros2 run husky_waypoint_recorder go_to_waypoint
-```
-
-
+---
 
 ## Demos
 <!-- ![Nav2 Localization Demo](videos/nav2_demo_small.gif) -->
 
-📹 **Full video:**  
-![Navigation Demo](videos/demo.mp4)
+### Environment
+
+| Gazebo world | SLAM occupancy map |
+|---|---|
+| ![Gazebo setup](videos/gazebo_setup.png) | ![Map](videos/map.png) |
+
+### Inspection waypoints
+
+Point 1–5 plotted on the SLAM map from `husky_waypoint_recorder/config/waypoints.yaml`, with the wall-mounted fire extinguishers Points 1, 3, 4, and 5 inspect (Point 2 currently reports missing).
+
+![Inspection waypoints and fire extinguisher locations](videos/waypoint_map_annotated.png)
+
+### Videos
+
+📹 **Full autonomous mission** — multi-waypoint mission run from the web dashboard, Gazebo and UI side by side, through report/image generation on completion.
+
+<video src="videos/full_autonomous_demo.mp4" controls width="720"></video>
+
+📹 **Single goal via manual control** — dashboard's Manual Control panel driving the Husky to one waypoint.
+
+<video src="videos/individual_goal_from_manual_control.mp4" controls width="720"></video>
+
+📹 **Manual goal + stop trigger** — sending a single goal and triggering navigation stop from the dashboard.
+
+<video src="videos/individual_goal_from_manual_control_with_stop_trigger.mp4" controls width="720"></video>
+
+> If these players don't render on your Git host, the `.mp4` files are still in `videos/` and can be opened/downloaded directly.
