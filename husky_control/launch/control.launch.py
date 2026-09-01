@@ -19,7 +19,9 @@ def generate_launch_description():
         executable='ekf_node',
         name='ekf_node',
         output='screen',
-        parameters=[config_husky_ekf],
+        parameters=[config_husky_ekf,
+            {'use_sim_time': True},
+        ],
         )
     ld.add_action(node_ekf)
 
@@ -36,7 +38,9 @@ def generate_launch_description():
             executable='imu_filter_madgwick_node',
             name='imu_filter',
             output='screen',
-            parameters=[config_imu_filter],
+            parameters=[config_imu_filter,
+                {'use_sim_time': True}
+            ],
             remappings=[
             ('imu/data_raw', '/imu/data_raw'),
             ('imu/data', '/imu/data')

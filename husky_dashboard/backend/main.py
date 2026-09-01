@@ -26,10 +26,10 @@ ros_node = None
 camera_node = None
 stop_service_node = None
 report_generated = False
-IMAGE_DIR = "/home/sharathnpayyadi/captured_images"
+IMAGE_DIR = "/home/ubuntu/captured_images"
 BASE_DIR = Path(__file__).resolve().parent.parent
 FRONTEND_DIR = BASE_DIR / "frontend"
-INSPECTION_DIR = "/home/sharathnpayyadi/inspection_results"
+INSPECTION_DIR = "/home/ubuntu/inspection_results"
 
 current_mission = {
     "mission_id": None,

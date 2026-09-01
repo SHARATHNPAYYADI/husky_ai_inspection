@@ -6,6 +6,10 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
 
+# husky_ai_pkg = get_package_share_directory('husky_ai_inspection')
+husky_nav2_pkg = get_package_share_directory('husky_nav2')
+husky_gazebo_pkg = get_package_share_directory('husky_gazebo')
+nav2_bringup_pkg = get_package_share_directory('nav2_bringup')
 
 def generate_launch_description():
 
@@ -24,17 +28,29 @@ def generate_launch_description():
 
     declare_world = DeclareLaunchArgument(
         'world_path',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_gazebo/worlds/construction_site_fire_extuinguisher.world'
+        default_value=os.path.join(
+            husky_gazebo_pkg,
+            'worlds',
+            'construction_site_fire_extuinguisher.world'
+        )
     )
 
     declare_map = DeclareLaunchArgument(
         'map',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/maps/my_map.yaml'
+        default_value=os.path.join(
+            husky_nav2_pkg,
+            'maps',
+            'small_factory.yaml'
+        )
     )
 
     declare_params = DeclareLaunchArgument(
         'params_file',
-        default_value='/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/config/nav2_params.yaml'
+        default_value=os.path.join(
+            husky_nav2_pkg,
+            'config',
+            'nav2_params.yaml'
+        )
     )
 
     # --------------------
@@ -43,7 +59,7 @@ def generate_launch_description():
     gazebo_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('husky_gazebo'),
+                husky_gazebo_pkg,
                 'launch',
                 'gazebo.launch.py'
             )
@@ -59,7 +75,7 @@ def generate_launch_description():
     localization_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('nav2_bringup'),
+                nav2_bringup_pkg,
                 'launch',
                 'localization_launch.py'
             )
@@ -87,7 +103,7 @@ def generate_launch_description():
     navigation_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(
-                get_package_share_directory('nav2_bringup'),
+                nav2_bringup_pkg,
                 'launch',
                 'navigation_launch.py'
             )

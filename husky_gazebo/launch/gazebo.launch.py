@@ -7,7 +7,10 @@ from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 from ament_index_python.packages import get_package_share_directory
+import os
 
+# husky_ai_pkg = get_package_share_directory('husky_ai_inspection')
+husky_nav2 = get_package_share_directory('husky_nav2')
 from pathlib import Path
 
 ARGUMENTS = [
@@ -142,7 +145,11 @@ def generate_launch_description():
         name='ekf_filter_node',
         output='screen',
         parameters=[
-            '/home/sharathnpayyadi/husky_ws/src/husky_ai_inspection/husky_nav2/config/ekf.yaml'
+            os.path.join(
+                husky_nav2,
+                'config',
+                'ekf.yaml'
+            )
         ]
     )
     # Launch husky_control/control.launch.py which is just robot_localization.
@@ -157,16 +164,16 @@ def generate_launch_description():
         [FindPackageShare("husky_control"), 'launch', 'teleop_base.launch.py'])))
 
     ld = LaunchDescription(ARGUMENTS)
-    ld.add_action(gz_resource_path)
-    ld.add_action(node_robot_state_publisher)
-    ld.add_action(spawn_joint_state_broadcaster)
-    ld.add_action(diffdrive_controller_spawn_callback)
-    ld.add_action(gzserver)
-    ld.add_action(gzclient)
-    ld.add_action(spawn_robot)
+    # ld.add_action(gz_resource_path)
+    # ld.add_action(node_robot_state_publisher)
+    # ld.add_action(spawn_joint_state_broadcaster)
+    # ld.add_action(diffdrive_controller_spawn_callback)
+    # ld.add_action(gzserver)
+    # ld.add_action(gzclient)
+    # ld.add_action(spawn_robot)
     ld.add_action(launch_husky_control)
     ld.add_action(launch_husky_teleop_base)
-    ld.add_action(remap_odom)
+    # ld.add_action(remap_odom)
     # ld.add_action(imu_filter_node)
     # ld.add_action(ekf_node)
 
