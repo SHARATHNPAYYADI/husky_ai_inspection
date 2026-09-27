@@ -154,15 +154,18 @@ Point 1–5 plotted on the SLAM map from `husky_waypoint_recorder/config/waypoin
 ### Videos
 
 📹 **Full autonomous mission** — multi-waypoint mission run from the web dashboard, Gazebo and UI side by side, through report/image generation on completion.
+[Watch on Drive](https://drive.google.com/file/d/1OmqZWOiUUJViwcSYgujKA9DuS3eBZYe7/view?usp=sharing)
 
 <video src="videos/full_autonomous_demo.mp4" controls width="720"></video>
 
 📹 **Single goal via manual control** — dashboard's Manual Control panel driving the Husky to one waypoint.
+[Watch on Drive](https://drive.google.com/file/d/1jH4X-8Radd2cwNN9Gx_kfic2K_OTB-Np/view?usp=sharing)
 
 <video src="videos/individual_goal_from_manual_control.mp4" controls width="720"></video>
 
 📹 **Manual goal + stop trigger** — sending a single goal and triggering navigation stop from the dashboard.
+[Watch on Drive](https://drive.google.com/file/d/1_rUXU6q1L-uCw43uziyiVfDj2J6aBOMX/view?usp=sharing)
 
 <video src="videos/individual_goal_from_manual_control_with_stop_trigger.mp4" controls width="720"></video>
 
-> If these players don't render on your Git host, the `.mp4` files are still in `videos/` and can be opened/downloaded directly.
+> If the in-repo players don't render on your Git host, use the Drive links above, or open the `.mp4` files directly from `videos/`.
